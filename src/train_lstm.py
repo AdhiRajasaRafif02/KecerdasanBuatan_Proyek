@@ -151,7 +151,7 @@ def plot_training_history(history, save_path=None):
     else:
         plt.show()
 
-# MAIN EXECUTION BLOCK (Sanity Check)
+# MAIN EXECUTION BLOCK
 if __name__ == "__main__":
     print("[SYSTEM] Menginisiasi Training Module...")
     
