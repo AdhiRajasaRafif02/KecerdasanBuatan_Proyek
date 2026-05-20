@@ -26,7 +26,6 @@ pada fase Hyperparameter Tuning, dengan menyesuaikan pada:
 - Exploratory Data Analysis (EDA): max_len & vocab_size mengikuti distribusi data asli.
 - Model Capacity: menaikkan/menurunkan units untuk mencegah Underfitting/Overfitting.
 - Hardware Optimization: menggunakan angka kelipatan basis biner (32, 64, 128) untuk efisiensi komputasi GPU.
-=============================================================================
 """
 
 import numpy as np
