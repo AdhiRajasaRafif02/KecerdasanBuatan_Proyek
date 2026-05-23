@@ -1,69 +1,49 @@
 """
 Evaluation module untuk model SMS Spam Classification
+Kelompok 7 - Tugas Akhir Kecerdasan Buatan
 
-Modul ini berisi fungsi-fungsi untuk:
-- Melakukan prediksi pada test set
-- Menghitung metrics: Accuracy, Precision, Recall, F1-Score
-- Generate confusion matrix dan visualisasi
-- Membuat classification report
+Modul ini menyediakan fungsi-fungsi untuk:
+1. Melakukan prediksi pada test set
+2. Menghitung evaluation metrics (accuracy, precision, recall, F1-score)
+3. Generate confusion matrix dan visualization
+4. Membuat classification report
 
-Tahap Progress Saat Ini: Persiapan evaluasi (akan dikerjakan tahap training)
+Tahap saat ini: Persiapan placeholder untuk evaluation (akan diimplementasi setelah training)
 """
 
 import os
 import numpy as np
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    confusion_matrix, classification_report, roc_auc_score, roc_curve
+    confusion_matrix, classification_report
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def predict(model, X_test):
+def evaluate_model(y_true, y_pred, y_pred_proba=None):
     """
-    Melakukan prediksi pada test set.
-    
-    Args:
-        model: Trained Keras model
-        X_test (np.array): Test data dengan shape (n_samples, sequence_length)
-    
-    Returns:
-        tuple: (y_pred_proba, y_pred_classes)
-            - y_pred_proba: Predicted probabilities (0-1)
-            - y_pred_classes: Predicted classes (0 atau 1)
-    
-    TODO pada tahap evaluasi:
-        - Handle batch prediction untuk dataset besar
-        - Add confidence scores
-    """
-    y_pred_proba = model.predict(X_test)
-    y_pred_classes = (y_pred_proba > 0.5).astype(int).flatten()
-    
-    return y_pred_proba.flatten(), y_pred_classes
-
-
-def calculate_metrics(y_true, y_pred, y_pred_proba=None):
-    """
-    Menghitung evaluation metrics untuk model.
+    Mengevaluasi model menggunakan berbagai metrics.
     
     Args:
         y_true (np.array): True labels (0 atau 1)
         y_pred (np.array): Predicted labels (0 atau 1)
         y_pred_proba (np.array): Predicted probabilities (0-1), optional
-    
+        
     Returns:
         dict: Dictionary berisi metrics:
-            - accuracy
-            - precision
-            - recall
-            - f1_score
-            - auc (jika y_pred_proba diberikan)
-            - tn, fp, fn, tp (dari confusion matrix)
-    
-    TODO pada tahap evaluasi:
-        - Add more metrics (specificity, sensitivity)
-        - Validate inputs
+            - accuracy: Akurasi model
+            - precision: Presisi (TP / (TP + FP))
+            - recall: Recall/sensitivity (TP / (TP + FN))
+            - f1_score: F1-score (harmonic mean precision & recall)
+            - tn, fp, fn, tp: Confusion matrix components
+            
+    TODO:
+        - Load model dari file
+        - Perform batch prediction untuk dataset besar
+        - Add ROC-AUC score
+        - Add specificity dan sensitivity metrics
+        - Validate input shapes dan values
     """
     metrics = {
         'accuracy': accuracy_score(y_true, y_pred),
@@ -72,58 +52,40 @@ def calculate_metrics(y_true, y_pred, y_pred_proba=None):
         'f1_score': f1_score(y_true, y_pred)
     }
     
-    if y_pred_proba is not None:
-        metrics['auc'] = roc_auc_score(y_true, y_pred_proba)
-    
     # Confusion matrix components
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    cm = confusion_matrix(y_true, y_pred)
+    tn, fp, fn, tp = cm.ravel()
     metrics['tn'] = tn
     metrics['fp'] = fp
     metrics['fn'] = fn
     metrics['tp'] = tp
+    metrics['confusion_matrix'] = cm
     
     return metrics
 
 
-def get_confusion_matrix(y_true, y_pred):
+def plot_confusion_matrix(cm, output_path="results/confusion_matrix.png", 
+                         class_names=['Ham', 'Spam']):
     """
-    Generate confusion matrix.
+    Plot confusion matrix sebagai heatmap dan simpan ke file.
     
     Args:
-        y_true (np.array): True labels
-        y_pred (np.array): Predicted labels
-    
-    Returns:
-        np.array: Confusion matrix (2x2)
-            [[TN, FP],
-             [FN, TP]]
-    
-    TODO pada tahap evaluasi:
-        - Add normalization option
+        cm (np.array): Confusion matrix (2x2)
+        output_path (str): Path untuk menyimpan plot (default: results/confusion_matrix.png)
+        class_names (list): Nama class untuk labels (default: ['Ham', 'Spam'])
+        
+    TODO:
+        - Add normalized confusion matrix visualization
+        - Customize color palette
+        - Add percentage values di cell
+        - Add detailed statistics
     """
-    cm = confusion_matrix(y_true, y_pred)
-    return cm
-
-
-def plot_confusion_matrix(y_true, y_pred, class_names=['Ham', 'Spam'], save_path=None):
-    """
-    Plot confusion matrix sebagai heatmap.
+    # Create output directory jika belum ada
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
     
-    Args:
-        y_true (np.array): True labels
-        y_pred (np.array): Predicted labels
-        class_names (list): Nama class untuk labels
-        save_path (str): Path untuk menyimpan plot (optional)
-    
-    Returns:
-        None (displays/saves plot)
-    
-    TODO pada tahap evaluasi:
-        - Add normalized confusion matrix option
-        - Customize colors dan styles
-    """
-    cm = confusion_matrix(y_true, y_pred)
-    
+    # Create figure
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=class_names,
@@ -136,148 +98,57 @@ def plot_confusion_matrix(y_true, y_pred, class_names=['Ham', 'Spam'], save_path
     plt.xlabel('Predicted Label', fontsize=12)
     plt.tight_layout()
     
-    if save_path:
-        os.makedirs(os.path.dirname(save_path) or '.', exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches='tight')
-        print(f"✓ Confusion matrix plot disimpan: {save_path}")
+    # Save figure
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    print(f"✓ Confusion matrix plot disimpan: {output_path}")
     
-    plt.show()
+    plt.close()
 
 
-def plot_roc_curve(y_true, y_pred_proba, save_path=None):
+if __name__ == '__main__':
     """
-    Plot ROC curve dan hitung AUC.
-    
-    Args:
-        y_true (np.array): True labels (0 atau 1)
-        y_pred_proba (np.array): Predicted probabilities
-        save_path (str): Path untuk menyimpan plot (optional)
-    
-    Returns:
-        dict: Dictionary berisi fpr, tpr, auc
-    
-    TODO pada tahap evaluasi:
-        - Compare multiple models ROC curves
-        - Add threshold markers
+    Main execution block - Placeholder untuk evaluation phase
     """
-    fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
-    auc = roc_auc_score(y_true, y_pred_proba)
+    print("\n")
+    print("╔" + "=" * 78 + "╗")
+    print("║" + " " * 22 + "SMS SPAM CLASSIFICATION - EVALUATION" + " " * 20 + "║")
+    print("║" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "║")
+    print("╚" + "=" * 78 + "╝")
     
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {auc:.4f})')
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Classifier')
+    print("\n" + "=" * 80)
+    print("EVALUATION MODULE - PLACEHOLDER")
+    print("=" * 80)
     
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate', fontsize=12)
-    plt.ylabel('True Positive Rate', fontsize=12)
-    plt.title('ROC Curve', fontsize=14, fontweight='bold')
-    plt.legend(loc="lower right")
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
+    print("\n[INFO] Modul evaluasi siap untuk digunakan setelah training selesai.")
     
-    if save_path:
-        os.makedirs(os.path.dirname(save_path) or '.', exist_ok=True)
-        plt.savefig(save_path, dpi=150, bbox_inches='tight')
-        print(f"✓ ROC curve plot disimpan: {save_path}")
+    print("\n" + "=" * 80)
+    print("TODO UNTUK TAHAP EVALUATION")
+    print("=" * 80)
     
-    plt.show()
+    todo_items = [
+        "Load trained model dari results/models/",
+        "Load preprocessed test data (X_test_pad, y_test)",
+        "Perform prediction pada test set",
+        "Calculate evaluation metrics (accuracy, precision, recall, F1)",
+        "Generate confusion matrix",
+        "Plot dan save confusion matrix visualization",
+        "Generate classification report",
+        "Compare Simple RNN vs LSTM performance",
+        "Save evaluation results ke file",
+        "Create comprehensive evaluation summary"
+    ]
     
-    return {'fpr': fpr, 'tpr': tpr, 'auc': auc}
-
-
-def print_evaluation_report(y_true, y_pred, class_names=['Ham', 'Spam']):
-    """
-    Print comprehensive evaluation report.
+    for i, todo in enumerate(todo_items, 1):
+        print(f"  [{i}] {todo}")
     
-    Args:
-        y_true (np.array): True labels
-        y_pred (np.array): Predicted labels
-        class_names (list): Nama class
+    print("\n" + "=" * 80)
+    print("EVALUATION FUNCTIONS AVAILABLE")
+    print("=" * 80)
     
-    Returns:
-        str: Classification report
+    print("\n  Functions:")
+    print("    1. evaluate_model(y_true, y_pred, y_pred_proba=None)")
+    print("       → Calculate accuracy, precision, recall, F1-score")
+    print("\n    2. plot_confusion_matrix(cm, output_path, class_names)")
+    print("       → Plot dan save confusion matrix visualization")
     
-    TODO pada tahap evaluasi:
-        - Save report to file
-        - Add detailed analysis
-    """
-    print("\n" + "=" * 70)
-    print("CLASSIFICATION REPORT")
-    print("=" * 70)
-    
-    report = classification_report(y_true, y_pred, target_names=class_names)
-    print(report)
-    
-    return report
-
-
-def evaluate_full(model, X_test, y_test, model_name='Model', save_dir='results'):
-    """
-    Full evaluation pipeline: predictions, metrics, visualisasi, dan reports.
-    
-    Args:
-        model: Trained Keras model
-        X_test (np.array): Test data
-        y_test (np.array): Test labels
-        model_name (str): Nama model untuk labeling
-        save_dir (str): Directory untuk menyimpan hasil
-    
-    Returns:
-        dict: Dictionary berisi semua evaluation results
-    
-    TODO pada tahap evaluasi:
-        - Add more visualization options
-        - Save all results to JSON
-        - Compare multiple models
-    """
-    print(f"\n{'='*70}")
-    print(f"EVALUASI MODEL: {model_name}")
-    print(f"{'='*70}")
-    
-    # Create results directory
-    os.makedirs(save_dir, exist_ok=True)
-    
-    # Predictions
-    print(f"\nMelakukan prediksi pada {len(X_test)} test samples...")
-    y_pred_proba, y_pred = predict(model, X_test)
-    
-    # Metrics
-    metrics = calculate_metrics(y_test, y_pred, y_pred_proba)
-    
-    print(f"\n{'='*70}")
-    print("HASIL EVALUASI")
-    print(f"{'='*70}")
-    print(f"Accuracy:  {metrics['accuracy']:.4f}")
-    print(f"Precision: {metrics['precision']:.4f}")
-    print(f"Recall:    {metrics['recall']:.4f}")
-    print(f"F1-Score:  {metrics['f1_score']:.4f}")
-    if 'auc' in metrics:
-        print(f"AUC:       {metrics['auc']:.4f}")
-    
-    # Confusion Matrix
-    print(f"\n{'='*70}")
-    print("CONFUSION MATRIX")
-    print(f"{'='*70}")
-    cm = get_confusion_matrix(y_test, y_pred)
-    print(cm)
-    
-    # Plots
-    plot_confusion_matrix(y_test, y_pred, 
-                         save_path=os.path.join(save_dir, f'{model_name}_confusion_matrix.png'))
-    
-    plot_roc_curve(y_test, y_pred_proba,
-                  save_path=os.path.join(save_dir, f'{model_name}_roc_curve.png'))
-    
-    # Classification Report
-    print_evaluation_report(y_test, y_pred)
-    
-    results = {
-        'model_name': model_name,
-        'metrics': metrics,
-        'predictions': y_pred,
-        'probabilities': y_pred_proba,
-        'confusion_matrix': cm
-    }
-    
-    return results
+    print("\n" + "=" * 80 + "\n")

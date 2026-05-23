@@ -1,204 +1,245 @@
 """
 Training module untuk model SMS Spam Classification
+Kelompok 7 - Tugas Akhir Kecerdasan Buatan
 
-Modul ini berisi fungsi-fungsi untuk:
-- Membangun model Simple RNN sebagai baseline
-- Membangun model LSTM sebagai model utama
-- Melakukan training dan validation
-- Menyimpan model yang sudah dilatih
+Modul ini menyediakan fungsi-fungsi untuk:
+1. Membangun model Simple RNN sebagai baseline
+2. Membangun model LSTM sebagai model utama
+3. Training dan validation model
+4. Menyimpan model yang telah dilatih
 
-Data contract dan input requirements:
-- X_train, y_train, X_val, y_val harus sudah diproses dan disimpan dalam format .npy oleh modul preprocessing.py
-- X_train & X_val harus berupa 2D array dengan shape (batch_size, sequence_length)
-- y_train & y_val harus berupa 1D array dengan shape (batch_size,) dan berisi integer 0 (ham) dan 1 (spam)
+Tahap saat ini: Persiapan placeholder untuk training (akan diimplementasi di tahap selanjutnya)
 
-Menunggu output dari eksekusi modul preprocessing.py:
-1. X_train & X_val Shape : (batch_size, sequence_length) -> max_len wajib sinkron.
-2. y_train & y_val Shape : (batch_size,) -> Wajib 1D array.
-3. Label Values          : Integer 0 (Ham) dan 1 (Spam).
-
-Nilai parameter default pada fungsi arsitektur di bawah (seperti lstm_units=64, 
-dense_units=32, dropout_rate=0.5, vocab_size=5000) bertindak sebagai baseline
-awal, jadi masih perlu diubah sesuai kebutuhan. 
-
-Angka-angka tersebut dinamis, seghingga perlu dimodifikasi 
-pada fase Hyperparameter Tuning, dengan menyesuaikan pada:
-- Exploratory Data Analysis (EDA): max_len & vocab_size mengikuti distribusi data asli.
-- Model Capacity: menaikkan/menurunkan units untuk mencegah Underfitting/Overfitting.
-- Hardware Optimization: menggunakan angka kelipatan basis biner (32, 64, 128) untuk efisiensi komputasi GPU.
+Data Requirements:
+- X_train, X_test: shape (n_samples, max_len=100)
+- y_train, y_test: shape (n_samples,) dengan values 0 (ham) atau 1 (spam)
+- tokenizer: Keras Tokenizer object yang sudah fit
+- label_encoder: sklearn LabelEncoder object yang sudah fit
 """
 
+import os
 import numpy as np
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, SimpleRNN, LSTM, Dense, Dropout, GRU
+from tensorflow.keras.layers import Embedding, SimpleRNN, LSTM, Dense, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.utils.class_weight import compute_class_weight
-import matplotlib.pyplot as plt
 
-# DYNAMIC ARCHITECTURE FUNCTIONS
-def build_rnn_baseline(vocab_size, embedding_dim=128, rnn_units=64, 
-                       dense_units=32, dropout_rate=0.5, learning_rate=0.001):
-    """Membangun model Simple RNN sebagai Baseline pembanding."""
+# Import preprocessing functions
+from eda_preprocessing import load_and_preprocess_data
+
+
+def build_simple_rnn_model(vocab_size, max_len=100, embedding_dim=128, 
+                          rnn_units=64, dense_units=32, dropout_rate=0.5, 
+                          learning_rate=0.001):
+    """
+    Membangun model Simple RNN sebagai baseline pembanding.
+    
+    Args:
+        vocab_size (int): Ukuran vocabulary dari tokenizer
+        max_len (int): Panjang maksimal sequence
+        embedding_dim (int): Dimensi embedding layer (default: 128)
+        rnn_units (int): Jumlah units di SimpleRNN layer (default: 64)
+        dense_units (int): Jumlah units di Dense layer (default: 32)
+        dropout_rate (float): Dropout rate (default: 0.5)
+        learning_rate (float): Learning rate untuk optimizer (default: 0.001)
+        
+    Returns:
+        model: Compiled Keras Sequential model
+        
+    TODO:
+        - Implement dan test model architecture
+        - Experiment dengan embedding_dim, rnn_units
+        - Add regularization jika diperlukan
+    """
+    print(f"\n[TODO] Building Simple RNN Model...")
+    print(f"  - vocab_size: {vocab_size}")
+    print(f"  - max_len: {max_len}")
+    print(f"  - embedding_dim: {embedding_dim}")
+    print(f"  - rnn_units: {rnn_units}")
+    
     model = Sequential([
-        Embedding(input_dim=vocab_size, output_dim=embedding_dim),
-        SimpleRNN(rnn_units, dropout=dropout_rate),
-        Dense(dense_units, activation='relu'),
-        Dropout(dropout_rate),
-        Dense(1, activation='sigmoid')
+        Embedding(input_dim=vocab_size, output_dim=embedding_dim, 
+                  input_length=max_len, name='embedding'),
+        SimpleRNN(rnn_units, dropout=dropout_rate, name='simple_rnn'),
+        Dense(dense_units, activation='relu', name='dense_1'),
+        Dropout(dropout_rate, name='dropout'),
+        Dense(1, activation='sigmoid', name='output')
     ])
     
-    model.compile(loss='binary_crossentropy', 
-                  optimizer=Adam(learning_rate=learning_rate), 
-                  metrics=['accuracy'])
-    return model
-
-
-def build_lstm_model(vocab_size, embedding_dim=128, lstm_units=64, 
-                     dense_units=32, dropout_rate=0.5, rec_dropout_rate=0.2, 
-                     learning_rate=0.001):
-    """Membangun model utama LSTM sesuai rancangan arsitektur sistem."""
-    model = Sequential([
-        Embedding(input_dim=vocab_size, output_dim=embedding_dim),
-        LSTM(lstm_units, dropout=dropout_rate, recurrent_dropout=rec_dropout_rate),
-        Dense(dense_units, activation='relu'),
-        Dropout(dropout_rate),
-        Dense(1, activation='sigmoid')
-    ])
-    
-    model.compile(loss='binary_crossentropy', 
-                  optimizer=Adam(learning_rate=learning_rate), 
-                  metrics=['accuracy'])
-    return model
-
-
-def build_gru_model(vocab_size, embedding_dim=128, gru_units=64, 
-                    dense_units=32, dropout_rate=0.5, rec_dropout_rate=0.2, 
-                    learning_rate=0.001):
-    """Membangun model GRU sebagai alternatif tambahan untuk eksperimen."""
-    model = Sequential([
-        Embedding(input_dim=vocab_size, output_dim=embedding_dim),
-        GRU(gru_units, dropout=dropout_rate, recurrent_dropout=rec_dropout_rate),
-        Dense(dense_units, activation='relu'),
-        Dropout(dropout_rate),
-        Dense(1, activation='sigmoid')
-    ])
-    
-    model.compile(loss='binary_crossentropy', 
-                  optimizer=Adam(learning_rate=learning_rate), 
-                  metrics=['accuracy'])
-    return model
-
-# TRAINING LOOP & UTILITIES
-def train_model(model, X_train, y_train, X_val, y_val, epochs=20, batch_size=32, patience=3):
-    """Mengeksekusi proses training dengan Validation Set dan algoritma Class Weights."""
-    print("\n[INFO] Menghitung Class Weights untuk mitigasi Imbalanced Data...")
-    classes = np.unique(y_train)
-    weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
-    class_weights_dict = dict(zip(classes, weights))
-    print(f"[INFO] Penalty Weights -> Ham: {class_weights_dict[0]:.2f} | Spam: {class_weights_dict[1]:.2f}")
-
-    early_stop = EarlyStopping(
-        monitor='val_loss', 
-        patience=patience, 
-        restore_best_weights=True,
-        verbose=1
-    )
-
-    print("\n[INFO] Memulai Training Loop...")
-    history = model.fit(
-        X_train, y_train,
-        validation_data=(X_val, y_val),
-        epochs=epochs,
-        batch_size=batch_size,
-        class_weight=class_weights_dict,
-        callbacks=[early_stop],
-        verbose=1
+    model.compile(
+        loss='binary_crossentropy',
+        optimizer=Adam(learning_rate=learning_rate),
+        metrics=['accuracy']
     )
     
-    return history
+    return model
 
-def save_model(model, filepath):
-    """Menyimpan model ke dalam disk untuk fase deployment/evaluasi."""
-    model.save(filepath)
-    print(f"\n[SUCCESS] Model berhasil diekspor ke: {filepath}")
 
-def plot_training_history(history, save_path=None):
-    """Visualisasi metrik Loss dan Accuracy per epoch untuk analisis Overfitting."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-    ax1.plot(history.history['accuracy'], label='Train Accuracy', color='blue')
-    ax1.plot(history.history['val_accuracy'], label='Val Accuracy', color='orange')
-    ax1.set_title('Model Accuracy')
-    ax1.set_ylabel('Accuracy')
-    ax1.set_xlabel('Epoch')
-    ax1.legend()
-    ax1.grid(True, linestyle='--', alpha=0.7)
-
-    ax2.plot(history.history['loss'], label='Train Loss', color='blue')
-    ax2.plot(history.history['val_loss'], label='Val Loss', color='orange')
-    ax2.set_title('Model Loss (Binary Crossentropy)')
-    ax2.set_ylabel('Loss')
-    ax2.set_xlabel('Epoch')
-    ax2.legend()
-    ax2.grid(True, linestyle='--', alpha=0.7)
-
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path, dpi=300)
-        print(f"[SUCCESS] Training history plot disimpan di: {save_path}")
-    else:
-        plt.show()
-
-# MAIN EXECUTION BLOCK
-if __name__ == "__main__":
-    print("[SYSTEM] Menginisiasi Training Module...")
+def build_lstm_model(vocab_size, max_len=100, embedding_dim=128,
+                    lstm_units=64, dense_units=32, dropout_rate=0.5,
+                    rec_dropout_rate=0.2, learning_rate=0.001):
+    """
+    Membangun model LSTM sebagai model utama.
     
+    Args:
+        vocab_size (int): Ukuran vocabulary dari tokenizer
+        max_len (int): Panjang maksimal sequence
+        embedding_dim (int): Dimensi embedding layer (default: 128)
+        lstm_units (int): Jumlah units di LSTM layer (default: 64)
+        dense_units (int): Jumlah units di Dense layer (default: 32)
+        dropout_rate (float): Dropout rate (default: 0.5)
+        rec_dropout_rate (float): Recurrent dropout rate (default: 0.2)
+        learning_rate (float): Learning rate untuk optimizer (default: 0.001)
+        
+    Returns:
+        model: Compiled Keras Sequential model
+        
+    TODO:
+        - Implement dan test LSTM model
+        - Experiment dengan lstm_units, embedding_dim
+        - Add bidirectional LSTM untuk peningkatan akurasi
+        - Add attention mechanism jika perlu
+    """
+    print(f"\n[TODO] Building LSTM Model...")
+    print(f"  - vocab_size: {vocab_size}")
+    print(f"  - max_len: {max_len}")
+    print(f"  - embedding_dim: {embedding_dim}")
+    print(f"  - lstm_units: {lstm_units}")
+    
+    model = Sequential([
+        Embedding(input_dim=vocab_size, output_dim=embedding_dim,
+                  input_length=max_len, name='embedding'),
+        LSTM(lstm_units, dropout=dropout_rate, 
+             recurrent_dropout=rec_dropout_rate, name='lstm'),
+        Dense(dense_units, activation='relu', name='dense_1'),
+        Dropout(dropout_rate, name='dropout'),
+        Dense(1, activation='sigmoid', name='output')
+    ])
+    
+    model.compile(
+        loss='binary_crossentropy',
+        optimizer=Adam(learning_rate=learning_rate),
+        metrics=['accuracy']
+    )
+    
+    return model
+
+
+def train_model(model, X_train, y_train, X_val, y_val, epochs=20, 
+               batch_size=32, patience=3, verbose=1):
+    """
+    Training model dengan validation set dan early stopping.
+    
+    Args:
+        model: Keras Sequential model yang sudah dikompilasi
+        X_train (np.array): Training data, shape (n_train, max_len)
+        y_train (np.array): Training labels, shape (n_train,)
+        X_val (np.array): Validation data, shape (n_val, max_len)
+        y_val (np.array): Validation labels, shape (n_val,)
+        epochs (int): Jumlah epoch training (default: 20)
+        batch_size (int): Batch size (default: 32)
+        patience (int): Patience untuk early stopping (default: 3)
+        verbose (int): Verbosity level (default: 1)
+        
+    Returns:
+        history: Training history object dari Keras
+        
+    TODO:
+        - Implement training dengan class weights
+        - Add learning rate scheduling
+        - Add detailed logging dan monitoring
+        - Implement validation metrics tracking
+        - Save checkpoint untuk best model
+    """
+    print(f"\n[TODO] Training model...")
+    print(f"  - X_train shape: {X_train.shape}")
+    print(f"  - X_val shape: {X_val.shape}")
+    print(f"  - epochs: {epochs}, batch_size: {batch_size}")
+    
+    # Placeholder untuk training
+    print("[INFO] Training akan diimplementasikan di tahap selanjutnya")
+    
+    return None
+
+
+if __name__ == '__main__':
+    """
+    Main execution block - Load data dan prepare untuk training
+    """
+    print("\n")
+    print("╔" + "=" * 78 + "╗")
+    print("║" + " " * 20 + "SMS SPAM CLASSIFICATION - TRAINING PREPARATION" + " " * 12 + "║")
+    print("║" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "║")
+    print("╚" + "=" * 78 + "╝")
+    
+    print("\n" + "=" * 80)
+    print("LOADING DAN PREPROCESSING DATA")
+    print("=" * 80)
+    
+    # Load dan preprocess data
     try:
-        # Load raw matrices dari pipeline hulu
-        print("[INFO] Memuat input tensors (.npy)...")
-        X_train = np.load("X_train.npy")
-        y_train = np.load("y_train.npy")
-        X_val = np.load("X_val.npy")
-        y_val = np.load("y_val.npy")
+        X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder = \
+            load_and_preprocess_data(
+                csv_path="spam.csv",
+                max_words=5000,
+                max_len=100,
+                test_size=0.2,
+                random_state=42
+            )
         
-        # Validasi dimensi tensor
-        print(f"[SUCCESS] Tensor berhasil dimuat.")
-        print(f"         - X_train shape : {X_train.shape}")
-        print(f"         - y_train shape : {y_train.shape}")
+        print("\n" + "=" * 80)
+        print("DATA PREPARATION SUMMARY")
+        print("=" * 80)
         
-    except FileNotFoundError:
-        print("[ERROR] File input (.npy) tidak terdeteksi.")
-        print("[AKSI]  Tunggu modul preprocessing.py dieksekusi terlebih dahulu.")
-        exit()
-
-    # Absolut parameter untuk testing awal, masih bisa diubah untuk eksperimen lebih lanjut
-    VOCAB_SIZE = 5000  
-    
-    print("\n[INFO] Merakit arsitektur LSTM Network...")
-    model_lstm = build_lstm_model(
-        vocab_size=VOCAB_SIZE, 
-        embedding_dim=128, 
-        lstm_units=64, 
-        dense_units=32
-    )
-    
-    # Cetak ringkasan layer dan kalkulasi parameter
-    model_lstm.summary()
-    
-    # Eksekusi Sanity Check (epoch bisa diubah untuk eksperimen)
-    history_lstm = train_model(
-        model=model_lstm, 
-        X_train=X_train, 
-        y_train=y_train, 
-        X_val=X_val, 
-        y_val=y_val, 
-        epochs=10,        
-        batch_size=32
-    )
-    
-    # Ekspor artifact untuk modul hilir (evaluate.py)
-    save_model(model_lstm, "lstm_spam_model.keras")
-    plot_training_history(history_lstm, "training_plot.png")
-    
-    print("\n[SYSTEM] Eksekusi tuntas. Model siap untuk pipeline evaluasi.")
+        # Display data shapes
+        print(f"\n✓ Data loaded successfully!")
+        print(f"\n  Training Data:")
+        print(f"    - X_train_pad shape: {X_train_pad.shape}")
+        print(f"    - y_train shape: {y_train.shape}")
+        print(f"    - Unique labels: {np.unique(y_train)}")
+        
+        print(f"\n  Test Data:")
+        print(f"    - X_test_pad shape: {X_test_pad.shape}")
+        print(f"    - y_test shape: {y_test.shape}")
+        print(f"    - Unique labels: {np.unique(y_test)}")
+        
+        print(f"\n  Tokenizer & Encoder:")
+        print(f"    - Vocabulary size: {len(tokenizer.word_index) + 1}")
+        print(f"    - Max sequence length: 100")
+        print(f"    - Label classes: {list(label_encoder.classes_)}")
+        
+        print("\n" + "=" * 80)
+        print("✓ DATA READY FOR TRAINING")
+        print("=" * 80)
+        
+        print("\n[INFO] Saatnya untuk training model!")
+        print("[INFO] Model yang akan ditraining:")
+        print("       1. Simple RNN (baseline)")
+        print("       2. LSTM (main model)")
+        
+        print("\n" + "=" * 80)
+        print("TODO UNTUK TAHAP SELANJUTNYA")
+        print("=" * 80)
+        
+        todo_items = [
+            "Implementasi Simple RNN model training",
+            "Implementasi LSTM model training",
+            "Setup training dengan class weights untuk imbalanced data",
+            "Implement learning rate scheduling",
+            "Add model checkpointing untuk best model",
+            "Save training history untuk visualization",
+            "Save trained models ke folder results/models/",
+            "Compare performance Simple RNN vs LSTM",
+            "Prepare data untuk evaluation phase"
+        ]
+        
+        for i, todo in enumerate(todo_items, 1):
+            print(f"  [{i}] {todo}")
+        
+        print("\n" + "=" * 80 + "\n")
+        
+    except Exception as e:
+        print(f"\n[ERROR] Terjadi error saat loading data: {str(e)}")
+        print("[ERROR] Pastikan spam.csv ada di project root dan preprocessing sudah dijalankan")
+        raise
