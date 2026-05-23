@@ -89,8 +89,8 @@ def show_basic_eda(df):
     
     # Mapping label encoding
     print(f"\nLabel Encoding Mapping:")
-    print(f"  ham → 0")
-    print(f"  spam → 1")
+    print(f"  ham -> 0")
+    print(f"  spam -> 1")
 
 
 def save_cleaned_dataset(df, output_path="results/cleaned_spam.csv"):
@@ -105,11 +105,11 @@ def save_cleaned_dataset(df, output_path="results/cleaned_spam.csv"):
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
-        print(f"✓ Folder '{output_dir}' berhasil dibuat")
+        print(f"[OK] Folder '{output_dir}' berhasil dibuat")
     
     # Simpan dataset
     df.to_csv(output_path, index=False)
-    print(f"✓ Dataset cleaned berhasil disimpan ke: {output_path}")
+    print(f"[OK] Dataset cleaned berhasil disimpan ke: {output_path}")
     print(f"  Total samples: {len(df)}")
 
 
@@ -148,26 +148,26 @@ def load_and_preprocess_data(csv_path="spam.csv", max_words=5000, max_len=100,
     # Step 1: Load dataset
     print("\n[STEP 1] Loading dataset...")
     df = pd.read_csv(csv_path, encoding='latin-1')
-    print(f"✓ Dataset loaded: {df.shape[0]} rows × {df.shape[1]} columns")
+    print(f"[OK] Dataset loaded: {df.shape[0]} rows x {df.shape[1]} columns")
     
     # Step 2: Select dan rename kolom
     print("\n[STEP 2] Selecting and renaming columns...")
     df = df[['v1', 'v2']].copy()
     df.columns = ['label', 'message']
-    print(f"✓ Columns renamed: v1→label, v2→message")
+    print(f"[OK] Columns renamed: v1->label, v2->message")
     
     # Step 3: Text cleaning
     print("\n[STEP 3] Cleaning text...")
     df['clean_message'] = df['message'].apply(clean_text)
-    print(f"✓ Text cleaning completed")
+    print(f"[OK] Text cleaning completed")
     
     # Step 4: Label encoding
     print("\n[STEP 4] Encoding labels...")
     label_encoder = LabelEncoder()
     df['label_encoded'] = label_encoder.fit_transform(df['label'])
-    print(f"✓ Labels encoded")
-    print(f"  {label_encoder.classes_[0]} → 0")
-    print(f"  {label_encoder.classes_[1]} → 1")
+    print(f"[OK] Labels encoded")
+    print(f"  {label_encoder.classes_[0]} -> 0")
+    print(f"  {label_encoder.classes_[1]} -> 1")
     
     # Step 5: Train-test split dengan stratifikasi
     print("\n[STEP 5] Splitting train-test ({}-{} split)...".format(
@@ -182,7 +182,7 @@ def load_and_preprocess_data(csv_path="spam.csv", max_words=5000, max_len=100,
         stratify=y
     )
     
-    print(f"✓ Data split completed")
+    print(f"[OK] Data split completed")
     print(f"  Training: {len(X_train)} samples ({len(X_train)/len(df)*100:.1f}%)")
     print(f"  Test: {len(X_test)} samples ({len(X_test)/len(df)*100:.1f}%)")
     
@@ -195,7 +195,7 @@ def load_and_preprocess_data(csv_path="spam.csv", max_words=5000, max_len=100,
     X_test_seq = tokenizer.texts_to_sequences(X_test)
     
     vocab_size = min(len(tokenizer.word_index) + 1, max_words)
-    print(f"✓ Tokenization completed")
+    print(f"[OK] Tokenization completed")
     print(f"  Vocabulary size: {vocab_size}")
     
     # Step 7: Padding
@@ -213,12 +213,12 @@ def load_and_preprocess_data(csv_path="spam.csv", max_words=5000, max_len=100,
         truncating='post'
     )
     
-    print(f"✓ Padding completed")
+    print(f"[OK] Padding completed")
     print(f"  X_train_pad shape: {X_train_pad.shape}")
     print(f"  X_test_pad shape: {X_test_pad.shape}")
     
     print("\n" + "=" * 80)
-    print("✓ PREPROCESSING COMPLETED")
+    print("[OK] PREPROCESSING COMPLETED")
     print("=" * 80)
     
     return X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder
@@ -231,10 +231,10 @@ if __name__ == '__main__':
     Jalankan dengan: python src/eda_preprocessing.py
     """
     print("\n")
-    print("╔" + "=" * 78 + "╗")
-    print("║" + " " * 15 + "SMS SPAM CLASSIFICATION - EDA & PREPROCESSING" + " " * 18 + "║")
-    print("║" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "║")
-    print("╚" + "=" * 78 + "╝\n")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 15 + "SMS SPAM CLASSIFICATION - EDA & PREPROCESSING" + " " * 18 + "|")
+    print("|" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "|")
+    print("+" + "=" * 78 + "+\n")
     
     # Load dan preprocess data
     X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder = \
@@ -271,16 +271,16 @@ if __name__ == '__main__':
     
     # Final summary
     print("\n" + "=" * 80)
-    print("✓ PREPROCESSING COMPLETED SUCCESSFULLY")
+    print("[OK] PREPROCESSING COMPLETED SUCCESSFULLY")
     print("=" * 80)
     
     print("\nPreprocessing Summary:")
-    print(f"  ✓ Total samples processed: {len(df)}")
-    print(f"  ✓ X_train_pad shape: {X_train_pad.shape}")
-    print(f"  ✓ X_test_pad shape: {X_test_pad.shape}")
-    print(f"  ✓ Vocabulary size: {len(tokenizer.word_index) + 1}")
-    print(f"  ✓ Max sequence length: 100")
-    print(f"  ✓ Cleaned dataset saved to: results/cleaned_spam.csv")
+    print(f"  [OK] Total samples processed: {len(df)}")
+    print(f"  [OK] X_train_pad shape: {X_train_pad.shape}")
+    print(f"  [OK] X_test_pad shape: {X_test_pad.shape}")
+    print(f"  [OK] Vocabulary size: {len(tokenizer.word_index) + 1}")
+    print(f"  [OK] Max sequence length: 100")
+    print(f"  [OK] Cleaned dataset saved to: results/cleaned_spam.csv")
     
     print("\n" + "=" * 80)
     print("Ready for training with the following outputs:")

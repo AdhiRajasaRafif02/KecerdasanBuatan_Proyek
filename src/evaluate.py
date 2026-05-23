@@ -100,7 +100,7 @@ def plot_confusion_matrix(cm, output_path="results/confusion_matrix.png",
     
     # Save figure
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"✓ Confusion matrix plot disimpan: {output_path}")
+    print(f"[OK] Confusion matrix plot disimpan: {output_path}")
     
     plt.close()
 
@@ -110,10 +110,10 @@ if __name__ == '__main__':
     Main execution block - Placeholder untuk evaluation phase
     """
     print("\n")
-    print("╔" + "=" * 78 + "╗")
-    print("║" + " " * 22 + "SMS SPAM CLASSIFICATION - EVALUATION" + " " * 20 + "║")
-    print("║" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "║")
-    print("╚" + "=" * 78 + "╝")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 22 + "SMS SPAM CLASSIFICATION - EVALUATION" + " " * 20 + "|")
+    print("|" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "|")
+    print("+" + "=" * 78 + "+")
     
     print("\n" + "=" * 80)
     print("EVALUATION MODULE - PLACEHOLDER")

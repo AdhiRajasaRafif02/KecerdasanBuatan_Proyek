@@ -127,7 +127,7 @@ def build_lstm_model(vocab_size, max_len=100, embedding_dim=128,
 
 
 def train_model(model, X_train, y_train, X_val, y_val, epochs=20, 
-               batch_size=32, patience=3, verbose=1):
+               batch_size=32, patience=3, verbose=1, model_path=None):
     """
     Training model dengan validation set dan early stopping.
     
@@ -141,26 +141,44 @@ def train_model(model, X_train, y_train, X_val, y_val, epochs=20,
         batch_size (int): Batch size (default: 32)
         patience (int): Patience untuk early stopping (default: 3)
         verbose (int): Verbosity level (default: 1)
+        model_path (str): Path untuk menyimpan model terbaik (optional)
         
     Returns:
         history: Training history object dari Keras
-        
-    TODO:
-        - Implement training dengan class weights
-        - Add learning rate scheduling
-        - Add detailed logging dan monitoring
-        - Implement validation metrics tracking
-        - Save checkpoint untuk best model
     """
-    print(f"\n[TODO] Training model...")
+    print(f"\n[INFO] Memulai training model...")
     print(f"  - X_train shape: {X_train.shape}")
     print(f"  - X_val shape: {X_val.shape}")
     print(f"  - epochs: {epochs}, batch_size: {batch_size}")
     
-    # Placeholder untuk training
-    print("[INFO] Training akan diimplementasikan di tahap selanjutnya")
+    callbacks = []
     
-    return None
+    # 1. Early Stopping
+    callbacks.append(EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True))
+    
+    # 2. Model Checkpoint
+    if model_path:
+        from tensorflow.keras.callbacks import ModelCheckpoint
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        callbacks.append(ModelCheckpoint(model_path, monitor='val_loss', save_best_only=True))
+
+    # 3. Class Weights untuk imbalanced dataset (Spam/Ham)
+    classes = np.unique(y_train)
+    weights = compute_class_weight('balanced', classes=classes, y=y_train)
+    class_weight_dict = {classes[i]: weights[i] for i in range(len(classes))}
+    print(f"  - Menggunakan class weights: {class_weight_dict}")
+    
+    history = model.fit(
+        X_train, y_train,
+        validation_data=(X_val, y_val),
+        epochs=epochs,
+        batch_size=batch_size,
+        callbacks=callbacks,
+        class_weight=class_weight_dict,
+        verbose=verbose
+    )
+    
+    return history
 
 
 if __name__ == '__main__':
@@ -168,10 +186,10 @@ if __name__ == '__main__':
     Main execution block - Load data dan prepare untuk training
     """
     print("\n")
-    print("╔" + "=" * 78 + "╗")
-    print("║" + " " * 20 + "SMS SPAM CLASSIFICATION - TRAINING PREPARATION" + " " * 12 + "║")
-    print("║" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "║")
-    print("╚" + "=" * 78 + "╝")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 20 + "SMS SPAM CLASSIFICATION - TRAINING PREPARATION" + " " * 12 + "|")
+    print("|" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "|")
+    print("+" + "=" * 78 + "+")
     
     print("\n" + "=" * 80)
     print("LOADING DAN PREPROCESSING DATA")
@@ -193,7 +211,7 @@ if __name__ == '__main__':
         print("=" * 80)
         
         # Display data shapes
-        print(f"\n✓ Data loaded successfully!")
+        print(f"\n[OK] Data loaded successfully!")
         print(f"\n  Training Data:")
         print(f"    - X_train_pad shape: {X_train_pad.shape}")
         print(f"    - y_train shape: {y_train.shape}")
@@ -210,34 +228,51 @@ if __name__ == '__main__':
         print(f"    - Label classes: {list(label_encoder.classes_)}")
         
         print("\n" + "=" * 80)
-        print("✓ DATA READY FOR TRAINING")
+        print("[OK] DATA READY FOR TRAINING")
         print("=" * 80)
         
-        print("\n[INFO] Saatnya untuk training model!")
-        print("[INFO] Model yang akan ditraining:")
-        print("       1. Simple RNN (baseline)")
-        print("       2. LSTM (main model)")
+        from sklearn.model_selection import train_test_split
+        
+        print("\n[INFO] Membagi sebagian data training untuk validation set (10%)...")
+        X_train_final, X_val, y_train_final, y_val = train_test_split(
+            X_train_pad, y_train, test_size=0.1, random_state=42, stratify=y_train
+        )
+        
+        vocab_size = len(tokenizer.word_index) + 1
+        
+        # 1. Simple RNN (Baseline)
+        print("\n" + "=" * 80)
+        print("TRAINING SIMPLE RNN (BASELINE)")
+        print("=" * 80)
+        rnn_model = build_simple_rnn_model(vocab_size=vocab_size, max_len=100)
+        rnn_history = train_model(
+            rnn_model, 
+            X_train_final, y_train_final, 
+            X_val, y_val, 
+            epochs=10, 
+            patience=3,
+            model_path='results/models/simple_rnn.h5'
+        )
+        
+        # 2. LSTM (Main Model)
+        print("\n" + "=" * 80)
+        print("TRAINING LSTM (MAIN MODEL)")
+        print("=" * 80)
+        lstm_model = build_lstm_model(vocab_size=vocab_size, max_len=100)
+        lstm_history = train_model(
+            lstm_model, 
+            X_train_final, y_train_final, 
+            X_val, y_val, 
+            epochs=10, 
+            patience=3,
+            model_path='results/models/lstm.h5'
+        )
         
         print("\n" + "=" * 80)
-        print("TODO UNTUK TAHAP SELANJUTNYA")
-        print("=" * 80)
-        
-        todo_items = [
-            "Implementasi Simple RNN model training",
-            "Implementasi LSTM model training",
-            "Setup training dengan class weights untuk imbalanced data",
-            "Implement learning rate scheduling",
-            "Add model checkpointing untuk best model",
-            "Save training history untuk visualization",
-            "Save trained models ke folder results/models/",
-            "Compare performance Simple RNN vs LSTM",
-            "Prepare data untuk evaluation phase"
-        ]
-        
-        for i, todo in enumerate(todo_items, 1):
-            print(f"  [{i}] {todo}")
-        
-        print("\n" + "=" * 80 + "\n")
+        print("[OK] TRAINING SELESAI")
+        print("Model terbaik telah disimpan ke folder 'results/models/'")
+        print("Langkah selanjutnya: Jalankan evaluate.py untuk melakukan evaluasi model")
+        print("=" * 80 + "\n")
         
     except Exception as e:
         print(f"\n[ERROR] Terjadi error saat loading data: {str(e)}")

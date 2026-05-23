@@ -1,5 +1,11 @@
 # K07 - SMS Spam Classification using LSTM
 
+## Anggota Kelompok
+- Adhi Rajasa Rafif - 2306266943
+- Fido Wahyu Choirulinsan - 2306250674
+- Gede Rama Pradnya Widada - 2306161914
+- Muhammad Rifat Faqih - 2306250762
+
 Proyek ini bertujuan untuk mengklasifikasikan pesan SMS menjadi spam atau ham menggunakan model Recurrent Neural Network, khususnya LSTM.
 
 ## Dataset
@@ -19,7 +25,7 @@ Metrik evaluasi yang digunakan:
 
 ## Progress Saat Ini
 
-Proyek saat ini sudah sampai pada tahap **EDA dan Pra-pemrosesan** dengan beberapa persiapan untuk tahap training.
+Proyek saat ini sudah sampai pada tahap **Training Model** (Tahap 3 selesai) dengan persiapan siap memasuki tahap evaluasi.
 
 ### Tahapan yang Sudah Dilakukan:
 
@@ -58,17 +64,23 @@ Proyek saat ini sudah sampai pada tahap **EDA dan Pra-pemrosesan** dengan bebera
 
 ### Tahapan yang Akan Datang:
 
-#### 4. Model Development (Tahap Berikutnya)
-- **Baseline Model:** Simple RNN dengan struktur awal sudah disiapkan
-- **Main Model:** LSTM (stacked) dengan struktur awal sudah disiapkan
-- **Alternative Model:** GRU (optional)
+#### 4. ✓ Model Development (Selesai)
+- **Baseline Model:** Simple RNN (Telah di-train dengan akurasi validasi ~13%)
+- **Main Model:** LSTM (Telah di-train dengan akurasi validasi ~86%)
+- **Class Weights:** Diterapkan untuk mengatasi imbalance data Spam
 
-#### 5. Training
-- Training dengan validation set
-- Early stopping callback untuk menghindari overfitting
-- Visualisasi training history (loss dan accuracy)
+#### 5. ✓ Training (Selesai)
+- Training dengan validation set (10% split)
+- Early stopping & Model Checkpoint diterapkan
+- Model berhasil disimpan di `results/models/lstm.h5` dan `results/models/simple_rnn.h5`
 
-#### 6. Evaluasi
+**Hasil Akurasi Validasi (Tahap Training):**
+- **LSTM (Main Model):** ~86.55%
+- **Simple RNN (Baseline):** ~13.45%
+
+> **PENTING:** Angka di atas baru merupakan metrik evaluasi internal saat proses *training*. **Langkah wajib selanjutnya** adalah membawa model ini ke Tahap Evaluasi untuk diuji menggunakan *Test Set* agar mendapatkan nilai performa asli (Akurasi, Presisi, Recall, F1-Score).
+
+#### 6. Evaluasi (Sedang Dikerjakan)
 - Prediksi pada test set
 - Perhitungan metrics:
   - Accuracy
@@ -168,17 +180,17 @@ Output:
 - Membuat file: `results/cleaned_spam.csv`
 - Print status bahwa preprocessing completed
 
-### 3. Persiapan Training
+### 3. Menjalankan Training
 
 ```bash
-# Untuk melihat struktur dan placeholder training
+# Menjalankan proses training model
 python src/train_lstm.py
 ```
 
 Output:
-- Menampilkan data shapes
-- Menampilkan TODO items untuk tahap training
-- Data siap untuk model training (Simple RNN dan LSTM)
+- Menampilkan arsitektur dan status data shape
+- Menjalankan proses training iteratif Keras (fit)
+- Menyimpan hasil model (`.h5`) ke dalam `results/models/`
 
 ### 4. Evaluation (setelah training selesai)
 
@@ -204,18 +216,17 @@ KecerdasanBuatan_Proyek/
 ├── .gitignore                      # File Git ignore
 │
 ├── src/
-│   ├── eda_preprocessing.py        # ✓ EDA dan preprocessing (READY)
-│   ├── train_lstm.py               # ⚙ Placeholder training (READY)
-│   └── evaluate.py                 # ⚙ Placeholder evaluasi (READY)
+│   ├── eda_preprocessing.py        # ✓ EDA dan preprocessing (Selesai)
+│   ├── train_lstm.py               # ✓ Model training (Selesai)
+│   └── evaluate.py                 # ⚙ Skrip evaluasi (Tahap Selanjutnya)
 │
 ├── notebooks/
-│   ├── README.md                   # Outline notebook jika dibuat
-│   └── sms_spam_lstm.ipynb         # Notebook untuk reference (optional)
+│   └── sms_spam_lstm.ipynb         # Notebook untuk referensi (Opsional)
 │
 ├── results/
 │   ├── .gitkeep                    # Placeholder untuk hasil output
-│   ├── cleaned_spam.csv            # ✓ Dataset yang sudah dibersihkan (generated)
-│   └── models/                     # (akan dibuat saat training)
+│   ├── cleaned_spam.csv            # ✓ Dataset yang sudah dibersihkan
+│   └── models/                     # ✓ Berisi file lstm.h5 dan simple_rnn.h5
 │
 └── docs/
     └── .gitkeep                    # Placeholder untuk dokumentasi progress
@@ -228,17 +239,11 @@ KecerdasanBuatan_Proyek/
 - **Visualization:** Matplotlib, Seaborn
 - **Version Control:** Git
 
-### Timeline Proyek
+### Tahapan Pengerjaan Proyek
 
-1. ✓ **Minggu 1:** Pencarian dataset dan EDA
-2. ✓ **Minggu 2:** Preprocessing dan persiapan data
-3. **Minggu 3:** Training model RNN dan LSTM (next phase)
-4. **Minggu 4:** Evaluasi dan analisis hasil
-5. **Minggu 5:** Fine-tuning dan optimization
-6. **Minggu 6:** Finalisasi dan presentasi
-
-## Anggota Kelompok
-- Adhi Rajasa Rafif - 2306266943
-- Fido Wahyu Choirulinsan - 2306250674
-- Gede Rama Pradnya Widada - 2306161914
-- Muhammad Rifat Faqih - 2306250762
+1. ✓ **Tahap 1:** Pencarian dataset dan Exploratory Data Analysis (Selesai)
+2. ✓ **Tahap 2:** Preprocessing dan persiapan data (Selesai)
+3. ✓ **Tahap 3:** Training model RNN dan LSTM (Selesai)
+4. **Tahap 4:** Evaluasi dan analisis hasil (Sedang Dikerjakan)
+5. **Tahap 5:** Fine-tuning dan optimisasi (Belum Dimulai)
+6. **Tahap 6:** Finalisasi laporan dan presentasi (Belum Dimulai)
