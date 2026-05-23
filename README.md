@@ -23,6 +23,13 @@ Metrik evaluasi yang digunakan:
 - F1-score
 - Confusion Matrix
 
+Tambahan metrik yang juga dihitung pada tahap evaluasi (lebih informatif untuk dataset imbalanced):
+- ROC-AUC
+- PR-AUC (Average Precision)
+- Specificity (True Negative Rate untuk kelas Ham)
+- Balanced Accuracy
+- MCC (Matthews Correlation Coefficient)
+
 ## Progress Saat Ini
 
 Proyek saat ini sudah sampai pada tahap **Training Model** (Tahap 3 selesai) dengan persiapan siap memasuki tahap evaluasi.
@@ -183,7 +190,10 @@ Output:
 ### 3. Menjalankan Training
 
 ```bash
-# Menjalankan proses training model
+# Menjalankan proses training model (dari root)
+python train_lstm.py
+
+# (Alternatif) langsung ke file di src/
 python src/train_lstm.py
 ```
 
@@ -195,14 +205,37 @@ Output:
 ### 4. Evaluation (setelah training selesai)
 
 ```bash
-# Untuk melihat fungsi-fungsi evaluasi yang tersedia
-python src/evaluate.py
+# Evaluasi 1 model (default: results/models/lstm.h5)
+python evaluate.py
+
+# Evaluasi model tertentu
+python evaluate.py --model results/models/lstm.h5
+
+# Compare dua model (yang ada saja): Simple RNN vs LSTM
+python evaluate.py --compare
+
+# Atur threshold prediksi spam (default 0.5)
+python evaluate.py --model results/models/lstm.h5 --threshold 0.5
+
+# (Alternatif) langsung ke file di src/
+python src/evaluate.py --compare
 ```
 
 Output:
-- Menampilkan placeholder untuk evaluation phase
-- Menampilkan TODO items untuk tahap evaluasi
-- Fungsi-fungsi evaluasi tersedia: evaluate_model(), plot_confusion_matrix()
+- Menampilkan ringkasan metrik di terminal
+- Menyimpan hasil evaluasi ke folder `results/evaluation/<nama_model>/`:
+  - `metrics.json`
+  - `classification_report.txt`
+  - `confusion_matrix.png` dan `confusion_matrix_normalized.png`
+  - `roc_curve.png` dan `pr_curve.png`
+
+Catatan singkat arti metrik (label positif = Spam / 1):
+- **Precision (Spam)**: dari semua prediksi spam, berapa yang benar spam.
+- **Recall (Spam)**: dari semua spam sebenarnya, berapa yang berhasil terdeteksi.
+- **F1 (Spam)**: rata-rata harmonik precision & recall.
+- **Specificity (Ham)**: dari semua ham, berapa yang benar terdeteksi ham (menekan false positive).
+- **ROC-AUC**: kualitas ranking probabilitas secara umum.
+- **PR-AUC**: biasanya lebih relevan saat data imbalanced (spam minoritas).
 
 ---
 
@@ -244,6 +277,6 @@ KecerdasanBuatan_Proyek/
 1. ✓ **Tahap 1:** Pencarian dataset dan Exploratory Data Analysis (Selesai)
 2. ✓ **Tahap 2:** Preprocessing dan persiapan data (Selesai)
 3. ✓ **Tahap 3:** Training model RNN dan LSTM (Selesai)
-4. **Tahap 4:** Evaluasi dan analisis hasil (Sedang Dikerjakan)
+4. ✓ **Tahap 4:** Evaluasi dan analisis hasil (Sedang Dikerjakan)
 5. **Tahap 5:** Fine-tuning dan optimisasi (Belum Dimulai)
 6. **Tahap 6:** Finalisasi laporan dan presentasi (Belum Dimulai)
