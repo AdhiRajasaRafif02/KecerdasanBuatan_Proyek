@@ -8,14 +8,35 @@
 
 Proyek ini bertujuan untuk mengklasifikasikan pesan SMS menjadi spam atau ham menggunakan model Recurrent Neural Network, khususnya LSTM.
 
-## Dataset
+---
+
+# Dataset
+
 Dataset yang digunakan adalah SMS Spam Collection Dataset dari Kaggle. Dataset berisi pesan SMS dengan label ham atau spam.
 
-## Model
-- Model utama: LSTM
-- Baseline: Simple RNN
+## Distribusi Dataset
+- Ham ≈ 87%
+- Spam ≈ 13%
 
-## Evaluasi
+Dataset terdiri dari:
+- ±5.500 pesan SMS
+- 2 kolom utama:
+  - label
+  - message
+
+---
+
+# Model
+
+Model yang digunakan pada proyek ini:
+
+- Model utama: LSTM
+- Baseline model: Simple RNN
+
+---
+
+# Evaluasi
+
 Metrik evaluasi yang digunakan:
 - Accuracy
 - Precision
@@ -23,10 +44,10 @@ Metrik evaluasi yang digunakan:
 - F1-score
 - Confusion Matrix
 
-Tambahan metrik yang juga dihitung pada tahap evaluasi:
+Tambahan metrik evaluasi:
 - ROC-AUC
-- PR-AUC (Average Precision)
-- Specificity (True Negative Rate untuk kelas Ham)
+- PR-AUC
+- Specificity
 - Balanced Accuracy
 - MCC (Matthews Correlation Coefficient)
 
@@ -36,75 +57,89 @@ Tambahan metrik yang juga dihitung pada tahap evaluasi:
 
 Proyek saat ini telah menyelesaikan seluruh tahapan utama machine learning pipeline mulai dari preprocessing, training, evaluasi, hingga hyperparameter tuning dan error analysis.
 
-## Tahapan yang Sudah Dilakukan
+---
 
-### 1. ✓ Pencarian dan Pemilihan Dataset
+# Tahapan yang Sudah Dilakukan
+
+## 1. ✓ Pencarian dan Pemilihan Dataset
 - Memilih SMS Spam Collection Dataset sebagai dataset utama
-- Dataset berisi ~5.500+ pesan SMS dengan 2 kolom (label dan message)
+- Dataset berisi ±5.500 pesan SMS
 - Distribusi label:
   - Ham ≈ 87%
   - Spam ≈ 13%
 
-### 2. ✓ Exploratory Data Analysis (EDA)
-- Membaca dataset menggunakan Pandas dengan encoding `latin-1`
-- Mengecek struktur dataset dan jumlah data
+---
+
+## 2. ✓ Exploratory Data Analysis (EDA)
+
+Tahapan EDA yang dilakukan:
+- Membaca dataset menggunakan Pandas
 - Analisis distribusi label spam vs ham
 - Pengecekan missing values
+- Analisis struktur dataset
 
-### 3. ✓ Pra-pemrosesan Data (Data Preprocessing)
+---
 
-#### Text Cleaning
+## 3. ✓ Pra-pemrosesan Data (Data Preprocessing)
+
+### Text Cleaning
 - Mengubah teks menjadi lowercase
-- Menghapus URLs dan email addresses
-- Menghapus angka dan simbol khusus
+- Menghapus URL dan email
+- Menghapus angka
+- Menghapus simbol khusus
 - Menghapus spasi berlebih
 
-#### Label Encoding
-- Mengubah label `ham` dan `spam` menjadi format numerik (0 dan 1)
-- Menggunakan LabelEncoder dari scikit-learn
+### Label Encoding
+- ham → 0
+- spam → 1
 
-#### Train-Test Split
-- Membagi data menjadi training (80%) dan testing (20%)
-- Menggunakan stratifikasi untuk menjaga distribusi label
-- Random state = 42 untuk reproducibility
+### Train-Test Split
+- Training set = 80%
+- Testing set = 20%
+- Stratified split
+- random_state = 42
 
-#### Tokenisasi dan Padding
-- Tokenisasi teks menggunakan TensorFlow Keras Tokenizer
-- Vocabulary size = 5000 kata paling sering
+### Tokenization dan Padding
+- TensorFlow Keras Tokenizer
+- Vocabulary size = 5000
 - OOV token = `<OOV>`
-- Padding sequence ke panjang 100 menggunakan metode `post`
+- Max sequence length = 100
 
-### 4. ✓ Model Development dan Training
+---
 
-#### Baseline Model
-- Simple RNN
+## 4. ✓ Model Development dan Training
 
-#### Main Model
-- LSTM
+### Baseline Model
+Simple RNN digunakan sebagai baseline model.
 
-#### Training Configuration
+### Main Model
+LSTM digunakan sebagai model utama klasifikasi SMS spam.
+
+### Konfigurasi Training
 - Validation split = 10%
 - EarlyStopping
 - ModelCheckpoint
 - Class Weights untuk mengatasi imbalance dataset
 
-#### Hasil Training Awal
+### Hasil Training
 
 | Model | Validation Accuracy |
 |---|---|
 | Simple RNN | ~13.45% |
 | LSTM | ~86.55% |
 
-#### Model Output
-Model berhasil disimpan pada:
+### Output Model
+Model yang berhasil disimpan:
 - `results/models/lstm.h5`
 - `results/models/simple_rnn.h5`
 
-### 5. ✓ Evaluasi Model
+---
+
+## 5. ✓ Evaluasi Model
 
 Evaluasi dilakukan menggunakan test set untuk memperoleh performa aktual model.
 
-#### Metrics Evaluasi
+### Metrics Evaluasi
 - Accuracy
 - Precision
 - Recall
@@ -115,13 +150,13 @@ Evaluasi dilakukan menggunakan test set untuk memperoleh performa aktual model.
 - Balanced Accuracy
 - MCC
 
-#### Visualisasi Evaluasi
+### Visualisasi Evaluasi
 - Confusion Matrix
 - ROC Curve
 - Precision-Recall Curve
 - Classification Report
 
-#### Output Evaluasi
+### Output Evaluasi
 Folder:
 ```text
 results/evaluation/
@@ -135,11 +170,13 @@ Berisi:
 - `roc_curve.png`
 - `pr_curve.png`
 
-### 6. ✓ Hyperparameter Tuning dan Error Analysis
+---
+
+## 6. ✓ Hyperparameter Tuning dan Error Analysis
 
 Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LSTM untuk meningkatkan performa klasifikasi SMS spam.
 
-#### Hyperparameter yang Diuji
+### Hyperparameter yang Diuji
 - Embedding Dimension
 - LSTM Units
 - Dropout Rate
@@ -148,7 +185,7 @@ Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LS
 - Epoch
 - Optimizer
 
-#### Konfigurasi Hyperparameter Terbaik
+### Konfigurasi Hyperparameter Terbaik
 
 | Hyperparameter | Value |
 |---|---|
@@ -160,7 +197,7 @@ Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LS
 | Epoch | 15 |
 | Optimizer | Adam |
 
-#### Hasil Setelah Hyperparameter Tuning
+### Hasil Setelah Hyperparameter Tuning
 
 | Metric | Score |
 |---|---|
@@ -170,14 +207,14 @@ Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LS
 | F1-Score | ~89% |
 | ROC-AUC | ~0.94 |
 
-#### Error Analysis
+### Error Analysis
 Analisis dilakukan terhadap:
 - False Positive
 - False Negative
 - Kesalahan klasifikasi spam
 - Dampak imbalance dataset
 
-#### Output Hyperparameter Tuning
+### Output Hyperparameter Tuning
 ```text
 results/tuning_results.csv
 ```
@@ -186,7 +223,10 @@ results/tuning_results.csv
 
 # Progress Integrasi Preprocessing
 
-Preprocessing dan EDA telah diintegrasikan dalam modul `src/eda_preprocessing.py`.
+Preprocessing dan EDA telah diintegrasikan dalam modul:
+```text
+src/eda_preprocessing.py
+```
 
 ## Fungsi Preprocessing yang Tersedia
 
@@ -219,7 +259,7 @@ Pipeline preprocessing lengkap:
 6. Tokenization
 7. Padding
 
-#### Return Values
+### Return Values
 ```python
 X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder
 ```
@@ -250,11 +290,15 @@ X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder
 pip install -r requirements.txt
 ```
 
+---
+
 ## 2. Menjalankan Preprocessing dan EDA
 
 ```bash
 python src/eda_preprocessing.py
 ```
+
+---
 
 ## 3. Menjalankan Training
 
@@ -263,6 +307,8 @@ python train_lstm.py
 
 python src/train_lstm.py
 ```
+
+---
 
 ## 4. Evaluasi Model
 
@@ -278,16 +324,20 @@ python evaluate.py --model results/models/lstm.h5 --threshold 0.5
 python src/evaluate.py --compare
 ```
 
+---
+
 ## 5. Hyperparameter Tuning
 
 ```bash
 python src/hyperparameter_tuning.py
 ```
 
-#### Output
+### Output
 ```text
 results/tuning_results.csv
 ```
+
+---
 
 ## 6. Error Analysis
 
