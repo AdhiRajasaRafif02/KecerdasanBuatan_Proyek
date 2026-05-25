@@ -1,0 +1,23 @@
+message,true_label,predicted_label,predicted_probability,error_type
+great p diddy neighbor comes toothpaste every morning,0,1,0.9912493,False Positive
+ringtoneking num,1,0,0.021630406,False Negative
+sorry missed call lets talk time im num,1,0,0.0059002885,False Negative
+num dont number num gonna massive pain ass id rather not get involved thats possible,0,1,0.77915674,False Positive
+latest news ! police station toilet stolen cops nothing go !,1,0,0.012589944,False Negative
+rose redred bloodblood heartheart u u send tis ur friends including u like u get back num u r poor relation ! num u need num support num u r frnd num many num num luvs u num num praying god marry u try,0,1,0.99987066,False Positive
+check maili mailed varma kept copy regarding membershiptake careinsha allah,0,1,0.514122,False Positive
+ur face test num num num num num num num num num ltgt select number tell ur face astrology waiting quick reply,0,1,0.9999999,False Positive
+hey pple $ num $ num num nightsexcellent location wif breakfast hamper ! ! !,0,1,0.8830078,False Positive
+aiyo cos sms neva reply wait num reply lar tot havent finish ur lab wat,0,1,0.9996375,False Positive
+know taj mahal symbol love lesser known facts num mumtaz shahjahans num th wife num wifes num shahjahan killed mumtazs husband marry num mumtaz died ltgt th delivery num married mumtazs sister question arises hell love ? great hari,0,1,0.7839011,False Positive
+sale arsenal dartboard good condition no doubles trebles !,1,0,0.023343371,False Negative
+camera quite good num num mega pixels num optical num digital dooms lovely holiday safe hope hav good journey ! happy new year ! see couple weeks !,0,1,0.9989168,False Positive
+call number available appointment ask connect call waheed fathima,0,1,0.56813395,False Positive
+yep fine num num num num ice age,0,1,0.9995458,False Positive
+call tell infront call,0,1,0.60907924,False Positive
+email alertfrom jeri stewartsize num kbsubject lowcost prescripiton drvgsto listen email call num,1,0,0.12248916,False Negative
+madamregret disturbancemight receive reference check dlf premaricakindly informedrgdsrakheshkerala,0,1,0.8087009,False Positive
+romcapspam everyone around responding well presence since warm outgoing bringing real breath sunshine,1,0,0.000940662,False Negative
+realize num years well thousands old ladies running around tattoos ?,1,0,0.009363043,False Negative
+rct thnq adrian u text rgds vatian,1,0,0.038088437,False Negative
+hi ya babe x u num goten bout ? scammers getting smartthough regular vodafone no respond get prem rate msgsubscription nos used also beware !,1,0,0.00024459005,False Negative

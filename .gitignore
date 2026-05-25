@@ -52,9 +52,11 @@ venv.bak/
 !spam.csv
 
 # Results
-results/*.png
-results/*.jpg
-results/*.pdf
+!results/*.png
+!results/*.jpg
+!results/*.pdf
+!results/*.csv
+!results/*.txt
 !results/.gitkeep
 
 # Docs
