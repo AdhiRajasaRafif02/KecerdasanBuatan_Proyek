@@ -130,8 +130,8 @@ LSTM digunakan sebagai model utama klasifikasi SMS spam.
 
 ### Output Model
 Model yang berhasil disimpan:
-- `results/models/lstm.h5`
-- `results/models/simple_rnn.h5`
+- `models/best_lstm_model.keras` (Model Utama / Juara)
+- `models/simple_rnn_model.h5` (Baseline Model)
 
 ---
 
@@ -157,18 +157,12 @@ Evaluasi dilakukan menggunakan test set untuk memperoleh performa aktual model.
 - Classification Report
 
 ### Output Evaluasi
-Folder:
-```text
-results/evaluation/
-```
-
-Berisi:
-- `metrics.json`
-- `classification_report.txt`
-- `confusion_matrix.png`
-- `confusion_matrix_normalized.png`
+Folder `results/` berisi file-file pembuktian berikut:
+- `evaluation_metrics.csv`
+- `lstm_classification_report.txt`
+- `lstm_confusion_matrix.png`
 - `roc_curve.png`
-- `pr_curve.png`
+- `baseline_vs_lstm.png`
 
 ---
 
@@ -185,26 +179,36 @@ Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LS
 - Epoch
 - Optimizer
 
-### Konfigurasi Hyperparameter Terbaik
+### Rangkuman 8 Eksperimen (Hyperparameter Tuning)
+Untuk mendapatkan performa maksimal, kami menjalankan 8 skenario (runs) yang menguji berbagai kombinasi arsitektur:
+1. **Run 1 (Baseline BiLSTM):** Pengaturan standar (64 unit, dropout 0.5, lr 0.001).
+2. **Run 2 & 7 (Kapasitas Besar):** Menaikkan unit LSTM menjadi 128. Kapasitas besar terbukti mampu menangkap konteks lebih baik.
+3. **Run 3 & 8 (Variasi Dropout):** Bereksperimen dengan tingkat dropout yang lebih rendah (0.3 dan 0.4).
+4. **Run 4 & 5 (Variasi Learning Rate):** Mengubah kecepatan konvergensi. Memperlambat LR (0.0001) membuat skor anjlok, sedangkan mempercepat LR (0.01) menghasilkan performa puncak.
+5. **Run 6 (Small Batch):** Mengurangi *batch size* menjadi 16 untuk melihat efek pada gradien.
+
+**Skenario Terbaik:** Eksperimen ke-4 (**Run 4_high_lr**) keluar sebagai pemenang absolut dengan menembus **F1-Score 94.56%**. Model juara ini disimpan sebagai `best_lstm_model.keras`.
+
+### Konfigurasi Hyperparameter Terbaik (Run 4)
 
 | Hyperparameter | Value |
 |---|---|
-| Embedding Dimension | 64 |
-| LSTM Units | 128 |
-| Dropout Rate | 0.3 |
-| Batch Size | 16 |
-| Learning Rate | 0.0005 |
-| Epoch | 15 |
+| Embedding Dimension | 128 |
+| LSTM Units | 64 |
+| Dropout Rate | 0.5 |
+| Batch Size | 32 |
+| Learning Rate | 0.01 |
+| Epoch | 10 |
 | Optimizer | Adam |
 
 ### Hasil Setelah Hyperparameter Tuning & Preprocessing Lanjutan
 
 | Metric | Score |
 |---|---|
-| Accuracy | ~98.03% |
-| Precision | ~91.50% |
-| Recall | ~93.96% |
-| F1-Score | ~92.72% |
+| Accuracy | ~98.57% |
+| Precision | ~95.86% |
+| Recall | ~93.29% |
+| F1-Score | ~94.56% |
 
 ### Error Analysis
 Analisis dilakukan terhadap:
@@ -302,8 +306,6 @@ python src/eda_preprocessing.py
 ## 3. Menjalankan Training
 
 ```bash
-python train_lstm.py
-
 python src/train_lstm.py
 ```
 
@@ -312,15 +314,7 @@ python src/train_lstm.py
 ## 4. Evaluasi Model
 
 ```bash
-python evaluate.py
-
-python evaluate.py --model results/models/lstm.h5
-
-python evaluate.py --compare
-
-python evaluate.py --model results/models/lstm.h5 --threshold 0.5
-
-python src/evaluate.py --compare
+python src/evaluate.py
 ```
 
 ---
@@ -346,36 +340,45 @@ python src/error_analysis.py
 
 ---
 
+## 7. Menjalankan Prediksi Interaktif (Demo)
+
+Untuk menguji model secara langsung (mengetik teks sendiri), jalankan:
+```bash
+python src/predict.py
+```
+
+---
+
 # Analisis Etika, Bias, dan Keterbatasan Model
 
-Dokumen ini disusun untuk mendokumentasikan analisis mendalam mengenai etika, potensi bias, dan edge cases dari model klasifikasi SMS Spam yang telah dibangun menggunakan Bidirectional LSTM.
+Bagian ini membahas analisis tentang masalah etika, potensi bias data, dan kasus-kasus jebakan (edge cases) dari model LSTM yang sudah dibuat.
 
 ## 1. Potensi Bias pada Model
 
 Walaupun dataset (SMS Spam Collection) memiliki representasi yang cukup baik, terdapat beberapa potensi bias bawaan:
-- **Bias Kelas Mayoritas (Imbalance):** Dataset didominasi oleh pesan `ham` (~87%). Meskipun kita telah mengatasinya menggunakan parameter `class_weight='balanced'` selama *training*, model secara inheren memiliki riwayat melihat jauh lebih banyak teks normal.
-- **Bias Bahasa/Konteks:** Dataset ini berbasis bahasa Inggris dengan konteks slang dan tren promosi luar negeri (seperti penawaran dalam Pounds/Dollars). Model ini memiliki keterbatasan linguistik dan akan kehilangan efektivitasnya jika diterapkan pada pola spam lokal (seperti SMS penipuan *"Mama minta pulsa"* atau *"Pinjol cepat cair"* berbahasa Indonesia).
+- **Bias Kelas Mayoritas (Imbalance):** Data kita didominasi oleh pesan `ham` (~87%). Walaupun sudah diakali pakai parameter `class_weight='balanced'` waktu *training*, model tetap punya kecenderungan lebih hafal dengan pola teks normal karena jumlah datanya jauh lebih banyak.
+- **Bias Bahasa/Konteks:** Dataset ini memakai bahasa Inggris dengan gaya bahasa gaul dan tren promosi luar negeri (seperti diskon dalam Pounds/Dollars). Tentu saja model ini bakal kebingungan kalau disuruh mendeteksi pola spam lokal Indonesia (seperti SMS penipuan *"Mama minta pulsa"* atau penawaran *"Pinjol"*).
 
 ## 2. Analisis Kasus Kegagalan (Edge Cases)
 
 Berikut adalah beberapa *edge cases* yang berpotensi membingungkan model (salah klasifikasi):
 
 ### A. False Positives (Ham ditandai sebagai Spam)
-*False Positive* merupakan kegagalan yang paling tidak diinginkan karena pengguna bisa kehilangan pesan penting.
-- **Notifikasi Transaksional Resmi:** Pesan OTP, notifikasi tagihan kartu kredit dari bank, atau promosi sah berlangganan dari provider telekomunikasi yang sering kali padat angka (nominal uang) dan seruan tindakan (`!`). Karena simbol dan angka dipertahankan di preprocessing kita, model mungkin bingung membedakan *"Your OTP is 4928. Do not share!"* dengan pesan spam jika panjang teksnya hampir sama.
-- **Pesan Mendesak dari Kerabat:** Teks sah bergaya *urgent* seperti *"CALL ME NOW! URGENT!"* atau *"Where are u?! Reply immediately!"* bisa ditandai sebagai spam karena penggunaan kapital berlebih dan kata seruan yang umum dipakai *spammers*.
+*False Positive* adalah kesalahan paling fatal karena pengguna bisa kehilangan pesan yang sebenarnya penting.
+- **Pesan Transaksi Resmi:** SMS berisi kode OTP, tagihan kartu kredit, atau info kuota dari Telkomsel/provider yang biasanya banyak memuat angka dan tanda seru (`!`). Karena simbol dan angka kita biarkan saat preprocessing, model bisa kebingungan membedakan *"Your OTP is 4928. Do not share!"* dengan pesan spam penipuan.
+- **Pesan Darurat dari Keluarga:** Pesan asli yang ditulis buru-buru seperti *"CALL ME NOW! URGENT!"* bisa saja ditandai sebagai spam karena terdeteksi pakai huruf kapital semua dan tanda seru, persis seperti gaya tulisan para spammer.
 
 ### B. False Negatives (Spam lolos sebagai Ham)
-*False Negative* terjadi ketika SMS spam gagal terdeteksi oleh sistem.
-- **Manipulasi Ejaan (Adversarial Text):** Spammers dapat memodifikasi huruf untuk menghindari deteksi (misal: ejaan "FR33" alih-alih "FREE", atau menyisipkan banyak titik di antara huruf).
-- **Spam Pendekatan Personal (Social Engineering):** Penipuan modern seringkali meniru gaya percakapan santai (contoh: *"Hey, are you free tomorrow? Can you help me out?"*). Pesan semacam ini tidak memiliki *vocabulary* khas spam (seperti *winner, cash, claim*) sehingga model sangat mungkin mengklasifikasikannya sebagai pesan `ham`.
+*False Negative* terjadi kalau ada SMS spam yang lolos dari pantauan sistem.
+- **Manipulasi Ejaan (Adversarial Text):** Spammer sering mengubah ejaan untuk mengelabui sistem (contoh: menulis "FR33" ganti "FREE", atau menaruh banyak titik di antara huruf).
+- **Penipuan Gaya Akrab (Social Engineering):** Penipuan zaman sekarang sering sok akrab dan meniru gaya chat biasa (contoh: *"Hey, are you free tomorrow? Can you help me out?"*). Karena pesan seperti ini tidak pakai kata-kata jualan khas spam (seperti *winner, cash, claim*), model bisa dengan mudah ketipu dan mengiranya sebagai pesan `ham` biasa.
 
-## 3. Langkah Mitigasi yang Telah Diimplementasikan
+## 3. Cara Kami Mengatasi Masalah Tersebut
 
-Dalam proyek ini, telah dilakukan beberapa upaya iteratif untuk meminimalisir kesalahan klasifikasi tersebut:
-1. **Pemisahan Entitas Angka:** Pada modul `eda_preprocessing.py`, angka tidak dihapus secara membabi buta, melainkan direpresentasikan menjadi token standar `<NUM>`. Hal ini mencegah *vocabulary size* meledak namun tetap memberi *clue* ke model tentang kehadiran angka-angka penting (misal: nomor telepon untuk dihubungi).
-2. **Mempertahankan Simbol Indikator:** Simbol `!`, `?`, dan `$` diselamatkan dari proses Regex karena kemunculan berlebihan dari simbol-simbol ini adalah ciri kuat manipulasi emosi (urgensi atau godaan finansial) dari para penipu.
-3. **Arsitektur Bidirectional:** Perpindahan dari Simple RNN/LSTM biasa menuju Bidirectional LSTM membekali model kemampuan membaca frasa dari dua sisi. Ini membantu membedakan makna kontekstual kalimat utuh ketimbang hanya mencocokkan *keyword*.
+Di proyek ini, kelompok kami sudah mencoba beberapa cara untuk menekan angka error tersebut:
+1. **Penanganan Angka Khusus:** Di file `eda_preprocessing.py`, kami tidak asal menghapus angka. Semua angka kami ganti jadi satu token khusus yaitu `<NUM>`. Cara ini bikin jumlah kosakata model tidak bengkak, tapi model tetap sadar kalau di pesan itu ada deretan nomor telepon atau nominal uang.
+2. **Mempertahankan Tanda Baca Penting:** Simbol `!`, `?`, dan `$` kami kecualikan dari penghapusan teks. Kenapa? Karena spammer sangat suka pakai tanda seru atau simbol uang untuk memancing emosi korban.
+3. **Pakai Model Bidirectional:** Kami sengaja upgrade dari RNN biasa ke Bidirectional LSTM supaya model bisa baca kalimat dari depan ke belakang dan sebaliknya. Ini sangat membantu model buat paham makna asli kalimat secara utuh, bukan sekadar nebak dari satu kata saja.
 
 ---
 
@@ -393,22 +396,30 @@ KecerdasanBuatan_Proyek/
 │   ├── train_lstm.py
 │   ├── evaluate.py
 │   ├── hyperparameter_tuning.py
-│   └── error_analysis.py
+│   ├── error_analysis.py
+│   └── predict.py
+│
+├── models/
+│   ├── best_lstm_model.keras
+│   └── simple_rnn_model.h5
 │
 ├── notebooks/
 │   └── sms_spam_lstm.ipynb
 │
 ├── results/
 │   ├── .gitkeep
-│   ├── cleaned_spam.csv
+│   ├── evaluation_metrics.csv
+│   ├── error_analysis_lstm.txt
+│   ├── error_analysis_lstm.csv
+│   ├── lstm_classification_report.txt
 │   ├── tuning_results.csv
-│   ├── evaluation/
-│   │   ├── lstm/
-│   │   └── simple_rnn/
-│   │
-│   └── models/
-│       ├── lstm.h5
-│       └── simple_rnn.h5
+│   ├── lstm_confusion_matrix.png
+│   ├── roc_curve.png
+│   ├── tuning_f1_score.png
+│   ├── class_distribution.png
+│   ├── top_words_spam_ham.png
+│   ├── learning_curve.png
+│   └── baseline_vs_lstm.png
 │
 └── docs/
     └── .gitkeep
