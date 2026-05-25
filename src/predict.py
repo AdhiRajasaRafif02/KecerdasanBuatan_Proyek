@@ -18,7 +18,7 @@ def main():
         print(f"[ERROR] Gagal memuat dataset: {e}")
         return
 
-    model_path = 'models/lstm_model.h5'
+    model_path = 'models/best_lstm_model.keras'
     print(f"[INFO] Memuat model AI canggih (Bidirectional LSTM) dari {model_path}...")
     try:
         model = load_model(model_path)
