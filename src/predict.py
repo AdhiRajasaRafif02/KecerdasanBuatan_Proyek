@@ -27,7 +27,7 @@ def main():
         return
 
     print("\n" + "="*60)
-    print("      📱 SMS SPAM DETECTOR - KELOMPOK 7 📱      ")
+    print("      SMS SPAM DETECTOR - KELOMPOK 7      ")
     print("="*60)
     print("Ketik 'exit' atau 'quit' untuk berhenti.\n")
 
@@ -47,7 +47,7 @@ def main():
             
             # Predict
             prob = model.predict(padded, verbose=0)[0][0]
-            prediction = "🚨 SPAM 🚨" if prob >= 0.5 else "✅ HAM (Aman)"
+            prediction = "SPAM" if prob >= 0.5 else "HAM (Aman)"
             
             print("\n" + "-" * 50)
             print(f"Hasil Analisis AI : {prediction}")
