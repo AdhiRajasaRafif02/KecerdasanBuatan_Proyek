@@ -1,0 +1,116 @@
+==========================================================================================
+ERROR ANALYSIS REPORT - SMS SPAM CLASSIFICATION (LSTM MODEL)
+==========================================================================================
+
+Generated: 2026-05-24 23:18:57
+
+==========================================================================================
+SUMMARY STATISTICS
+==========================================================================================
+
+Total Test Samples:              1115
+Correct Predictions:             563 (50.49%)
+Incorrect Predictions:           552
+  - False Positives (Ham->Spam):  481
+  - False Negatives (Spam->Ham):  71
+
+Label Mapping:
+  0 = Ham (Legitimate message)
+  1 = Spam
+
+==========================================================================================
+FALSE POSITIVE EXAMPLES (Ham predicted as Spam)
+==========================================================================================
+
+Example 1:
+  Message: i am in tirupur call you da
+  True Label: 0 (Ham)
+  Predicted Label: 1 (Spam)
+  Confidence: 0.9507
+
+Example 2:
+  Message: no that just means you have a fat head
+  True Label: 0 (Ham)
+  Predicted Label: 1 (Spam)
+  Confidence: 0.7320
+
+Example 3:
+  Message: dont talk to him ever ok its my word
+  True Label: 0 (Ham)
+  Predicted Label: 1 (Spam)
+  Confidence: 0.8662
+
+==========================================================================================
+FALSE NEGATIVE EXAMPLES (Spam predicted as Ham)
+==========================================================================================
+
+Example 1:
+  Message: you are now unsubscribed all services get tons of sexy babes or hunks straight to your phone go to no subscriptions
+  True Label: 1 (Spam)
+  Predicted Label: 0 (Ham)
+  Confidence: 0.3664
+
+Example 2:
+  Message: do you want anytime any network mins text and a new video phone for only five pounds per week call now or reply for delivery tomorrow
+  True Label: 1 (Spam)
+  Predicted Label: 0 (Ham)
+  Confidence: 0.1220
+
+Example 3:
+  Message: freemsg hey there darling its been weeks now and no word back id like some fun you up for it still tb ok xxx std chgs to send to rcv
+  True Label: 1 (Spam)
+  Predicted Label: 0 (Ham)
+  Confidence: 0.2588
+
+==========================================================================================
+CORRECT PREDICTION EXAMPLES (untuk comparison)
+==========================================================================================
+
+Correct Ham Predictions:
+  1. oh right ok ill make sure that i do loads of work during the day got a really nasty cough today and is dry n shot so that should really help it
+  2. come aftr ltdecimalgt now i m cleaning the house
+
+Correct Spam Predictions:
+  1. you have won cash or a prize to claim call
+  2. wanna get laid nite want real dogging locations sent direct to ur mobile join the uks largest dogging network txt park to now nyt eca lp msg
+
+==========================================================================================
+ANALYSIS DAN RECOMMENDATIONS
+==========================================================================================
+
+Kemungkinan Penyebab Error:
+
+1. False Positives (Ham diprediksi sebagai Spam):
+   - Pesan legitimate mungkin mengandung kata-kata yang mirip dengan spam
+   - Preprocessing mungkin menghilangkan konteks penting yang membedakan
+   - Model mungkin overfitting pada karakteristik tertentu dari spam
+
+2. False Negatives (Spam diprediksi sebagai Ham):
+   - Pesan spam yang sophisticated mungkin menggunakan bahasa yang mirip ham
+   - Dataset training mungkin tidak cukup cover variasi spam patterns
+   - Pesan spam dengan format berbeda kurang terrepresentasi
+
+Rekomendasi Mitigasi:
+
+1. Tuning Threshold:
+   - Coba gunakan threshold > 0.5 jika ingin prioritas recall (menangkap spam)
+   - Coba gunakan threshold < 0.5 jika ingin prioritas precision
+
+2. Improve Data & Preprocessing:
+   - Menambah dataset training dengan lebih banyak spam examples
+   - Improve text cleaning untuk preservasi konteks penting
+   - Handle special characters dan URLs dengan lebih hati-hati
+
+3. Model Improvements:
+   - Coba Bidirectional LSTM (BiLSTM) untuk capturing context dari kedua arah
+   - Coba Gated Recurrent Unit (GRU) sebagai alternatif LSTM
+   - Add attention mechanism untuk fokus pada kata-kata penting
+   - Increase model capacity (embedding_dim, lstm_units)
+
+4. Class Weights:
+   - Jika dataset imbalanced, gunakan class_weight saat training
+   - Berikan weight lebih tinggi ke minority class (spam)
+
+==========================================================================================
+End of Report
+==========================================================================================

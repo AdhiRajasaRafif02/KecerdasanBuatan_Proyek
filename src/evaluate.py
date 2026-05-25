@@ -1,417 +1,365 @@
-"""SMS Spam Classification - Evaluation.
-
+"""
+Evaluation module untuk model SMS Spam Classification
 Kelompok 7 - Tugas Akhir Kecerdasan Buatan
 
-Modul ini menyediakan:
-1) Evaluasi model (Simple RNN & LSTM) pada test set
-2) Metrik klasifikasi (accuracy, precision, recall, F1, dll.)
-3) Confusion matrix + visualisasi
-4) Classification report
-5) (Opsional) ROC-AUC & PR-AUC + kurva jika probabilitas tersedia
+Modul ini menyediakan fungsi untuk:
+1. Load trained models (Simple RNN & LSTM)
+2. Predict labels pada test set
+3. Evaluasi performa model
+4. Simpan hasil evaluasi ke file CSV dan TXT
 
-Jalankan:
-    python src/evaluate.py --model results/models/lstm.h5
-    python src/evaluate.py --compare
+Jalankan dengan: python src/evaluate.py
 """
 
-from __future__ import annotations
-
-import argparse
-import json
 import os
-from dataclasses import asdict, dataclass
-from datetime import datetime
-
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
-    average_precision_score,
-    balanced_accuracy_score,
-    classification_report,
-    confusion_matrix,
-    f1_score,
-    log_loss,
-    matthews_corrcoef,
-    precision_recall_curve,
     precision_score,
     recall_score,
-    roc_auc_score,
-    roc_curve,
+    f1_score,
+    confusion_matrix,
+    classification_report
 )
 from tensorflow.keras.models import load_model
 
 from eda_preprocessing import load_and_preprocess_data
 
 
-@dataclass
-class EvalResult:
-    model_path: str
-    threshold: float
-    n_test: int
-    accuracy: float
-    precision: float
-    recall: float
-    f1_score: float
-    balanced_accuracy: float
-    mcc: float
-    specificity: float
-    npv: float
-    tn: int
-    fp: int
-    fn: int
-    tp: int
-    roc_auc: float | None = None
-    pr_auc: float | None = None
-    log_loss: float | None = None
-
-
-def _safe_div(n: float, d: float) -> float:
-    return float(n / d) if d != 0 else 0.0
-
-
-def evaluate_predictions(
-    y_true: np.ndarray,
-    y_pred: np.ndarray,
-    y_pred_proba: np.ndarray | None = None,
-    *,
-    model_path: str = "",
-    threshold: float = 0.5,
-) -> tuple[EvalResult, np.ndarray]:
-    """Hitung metrik evaluasi.
-
-    Catatan:
-    - Asumsi label positif adalah `1` (spam).
-    - `y_pred_proba` adalah probabilitas class 1 (spam).
+def load_trained_model(model_path):
     """
-    y_true = np.asarray(y_true).astype(int)
-    y_pred = np.asarray(y_pred).astype(int)
-
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
-    tn, fp, fn, tp = cm.ravel()
-
-    specificity = _safe_div(tn, tn + fp)
-    npv = _safe_div(tn, tn + fn)
-
-    accuracy = float(accuracy_score(y_true, y_pred))
-    precision = float(precision_score(y_true, y_pred, zero_division=0))
-    recall = float(recall_score(y_true, y_pred, zero_division=0))
-    f1 = float(f1_score(y_true, y_pred, zero_division=0))
-    bal_acc = float(balanced_accuracy_score(y_true, y_pred))
-    mcc = float(matthews_corrcoef(y_true, y_pred))
-
-    roc_auc = pr_auc = ll = None
-    if y_pred_proba is not None:
-        y_pred_proba = np.asarray(y_pred_proba).reshape(-1)
-        roc_auc = float(roc_auc_score(y_true, y_pred_proba))
-        pr_auc = float(average_precision_score(y_true, y_pred_proba))
-        ll = float(log_loss(y_true, y_pred_proba, labels=[0, 1]))
-
-    result = EvalResult(
-        model_path=model_path,
-        threshold=float(threshold),
-        n_test=int(len(y_true)),
-        accuracy=accuracy,
-        precision=precision,
-        recall=recall,
-        f1_score=f1,
-        balanced_accuracy=bal_acc,
-        mcc=mcc,
-        specificity=specificity,
-        npv=npv,
-        tn=int(tn),
-        fp=int(fp),
-        fn=int(fn),
-        tp=int(tp),
-        roc_auc=roc_auc,
-        pr_auc=pr_auc,
-        log_loss=ll,
-    )
-    return result, cm
-
-
-def plot_confusion_matrix(
-    cm: np.ndarray,
-    output_path: str = "results/evaluation/confusion_matrix.png",
-    class_names: list[str] | tuple[str, str] = ("Ham", "Spam"),
-    *,
-    normalize: bool = False,
-):
-    """Plot confusion matrix (raw / normalized) sebagai heatmap."""
-    # Create output directory jika belum ada
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
+    Load trained model dari file .h5
     
-    if normalize:
-        cm_to_plot = cm.astype(float)
-        row_sums = cm_to_plot.sum(axis=1, keepdims=True)
-        cm_to_plot = np.divide(cm_to_plot, row_sums, out=np.zeros_like(cm_to_plot), where=row_sums != 0)
-    else:
-        cm_to_plot = cm.astype(int)
-
-    # Create figure
-    plt.figure(figsize=(8, 6))
-    fmt = ".2f" if normalize else "d"
-    sns.heatmap(
-        cm_to_plot,
-        annot=True,
-        fmt=fmt,
-        cmap="Blues",
-        xticklabels=list(class_names),
-        yticklabels=list(class_names),
-        cbar_kws={"label": "Proportion" if normalize else "Count"},
-        annot_kws={"fontsize": 14},
-    )
-    
-    plt.title("Confusion Matrix" + (" (Normalized)" if normalize else ""), fontsize=14, fontweight="bold")
-    plt.ylabel('True Label', fontsize=12)
-    plt.xlabel('Predicted Label', fontsize=12)
-    plt.tight_layout()
-    
-    # Save figure
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"[OK] Confusion matrix plot disimpan: {output_path}")
-    
-    plt.close()
-
-
-def plot_roc_curve(
-    y_true: np.ndarray,
-    y_score: np.ndarray,
-    *,
-    output_path: str,
-):
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-
-    fpr, tpr, _ = roc_curve(y_true, y_score)
-    auc = roc_auc_score(y_true, y_score)
-    plt.figure(figsize=(7, 6))
-    plt.plot(fpr, tpr, label=f"ROC-AUC = {auc:.4f}")
-    plt.plot([0, 1], [0, 1], linestyle="--", linewidth=1)
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve")
-    plt.legend(loc="lower right")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    plt.close()
-    print(f"[OK] ROC curve disimpan: {output_path}")
-
-
-def plot_pr_curve(
-    y_true: np.ndarray,
-    y_score: np.ndarray,
-    *,
-    output_path: str,
-):
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-
-    precision, recall, _ = precision_recall_curve(y_true, y_score)
-    ap = average_precision_score(y_true, y_score)
-    plt.figure(figsize=(7, 6))
-    plt.plot(recall, precision, label=f"PR-AUC (AP) = {ap:.4f}")
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title("Precision-Recall Curve")
-    plt.legend(loc="lower left")
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    plt.close()
-    print(f"[OK] PR curve disimpan: {output_path}")
-
-
-def _model_display_name(model_path: str) -> str:
-    base = os.path.basename(model_path)
-    name, _ext = os.path.splitext(base)
-    return name or "model"
-
-
-def _resolve_model_path(model_path: str) -> str:
-    """Resolve model path for common invocation patterns.
-
-    Supports:
-    - Explicit paths: results/models/lstm.h5
-    - Bare filenames: lstm.h5 -> results/models/lstm.h5 (if present)
+    Args:
+        model_path (str): Path ke file model .h5
+        
+    Returns:
+        model: Loaded Keras model
+        
+    Raises:
+        FileNotFoundError: Jika file model tidak ditemukan
     """
-    model_path = os.path.expanduser(model_path)
-    if os.path.exists(model_path):
-        return model_path
-
-    # If user passes just a filename, try the default models directory.
-    if os.path.dirname(model_path) == "":
-        candidate = os.path.join("results", "models", model_path)
-        if os.path.exists(candidate):
-            return candidate
-
-    return model_path
-
-
-def _ensure_dir(path: str) -> None:
-    if path:
-        os.makedirs(path, exist_ok=True)
-
-
-def evaluate_keras_model(
-    *,
-    model_path: str,
-    max_words: int,
-    max_len: int,
-    test_size: float,
-    random_state: int,
-    threshold: float,
-    output_dir: str,
-    batch_size: int,
-) -> EvalResult:
-    model_path = _resolve_model_path(model_path)
     if not os.path.exists(model_path):
         raise FileNotFoundError(
-            f"Model tidak ditemukan: {model_path}. "
-            "Jalankan training dulu (python train_lstm.py) atau cek path model "
-            "(contoh: results/models/lstm.h5)."
+            f"[ERROR] Model tidak ditemukan: {model_path}\n"
+            f"[ERROR] Jalankan training terlebih dahulu: python src/train_lstm.py"
         )
-
-    # 1) Load data
-    _ = load_and_preprocess_data(
-        csv_path="spam.csv",
-        max_words=max_words,
-        max_len=max_len,
-        test_size=test_size,
-        random_state=random_state,
-    )
-    X_train_pad, X_test_pad, y_train, y_test, _tokenizer, _label_encoder = _
-
-    # 2) Load model
+    
+    print(f"[OK] Loading model dari: {model_path}")
     model = load_model(model_path)
+    return model
 
-    # 3) Predict
-    y_score = model.predict(X_test_pad, batch_size=batch_size, verbose=0).reshape(-1)
-    y_pred = (y_score >= threshold).astype(int)
 
-    # 4) Metrics
-    eval_res, cm = evaluate_predictions(
-        y_test,
-        y_pred,
-        y_score,
-        model_path=model_path,
-        threshold=threshold,
+def predict_labels(model, X_test, threshold=0.5):
+    """
+    Predict labels dari model menggunakan threshold
+    
+    Args:
+        model: Trained Keras model
+        X_test (np.ndarray): Test features, shape (n_samples, max_len)
+        threshold (float): Threshold untuk mengubah probabilitas menjadi label (default: 0.5)
+        
+    Returns:
+        y_pred (np.ndarray): Predicted labels (0 atau 1)
+        y_proba (np.ndarray): Predicted probabilities
+    """
+    print(f"[INFO] Predicting labels dengan threshold={threshold}...")
+    y_proba = model.predict(X_test, verbose=0).reshape(-1)
+    y_pred = (y_proba >= threshold).astype(int)
+    return y_pred, y_proba
+
+
+def evaluate_predictions(y_true, y_pred, model_name):
+    """
+    Evaluasi predictions dan hitung metrik
+    
+    Args:
+        y_true (np.ndarray): True labels
+        y_pred (np.ndarray): Predicted labels
+        model_name (str): Nama model untuk logging
+        
+    Returns:
+        dict: Dictionary dengan semua metrics
+    """
+    print(f"[INFO] Evaluating {model_name}...")
+    
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, zero_division=0)
+    recall = recall_score(y_true, y_pred, zero_division=0)
+    f1 = f1_score(y_true, y_pred, zero_division=0)
+    cm = confusion_matrix(y_true, y_pred)
+    
+    metrics = {
+        'model': model_name,
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1,
+    }
+    
+    print(f"  ✓ Accuracy:  {accuracy:.4f}")
+    print(f"  ✓ Precision: {precision:.4f}")
+    print(f"  ✓ Recall:    {recall:.4f}")
+    print(f"  ✓ F1-score:  {f1:.4f}")
+    
+    return metrics, cm
+
+
+def save_metrics_to_csv(metrics_list, output_path):
+    """
+    Simpan metrics ke file CSV
+    
+    Args:
+        metrics_list (list): List of dictionary dengan metrics dari setiap model
+        output_path (str): Path untuk menyimpan CSV file
+        
+    Returns:
+        None
+    """
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
+    df = pd.DataFrame(metrics_list)
+    df.to_csv(output_path, index=False)
+    print(f"[OK] Metrics CSV disimpan ke: {output_path}")
+
+
+def save_classification_report(y_true, y_pred, model_name, output_path):
+    """
+    Simpan classification report ke file TXT
+    
+    Args:
+        y_true (np.ndarray): True labels
+        y_pred (np.ndarray): Predicted labels
+        model_name (str): Nama model
+        output_path (str): Path untuk menyimpan TXT file
+        
+    Returns:
+        None
+    """
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
+    report = classification_report(
+        y_true, y_pred,
+        target_names=['Ham', 'Spam'],
+        digits=4,
+        zero_division=0
     )
+    
+    with open(output_path, 'w') as f:
+        f.write(f"Classification Report - {model_name}\n")
+        f.write("=" * 80 + "\n\n")
+        f.write(report)
+    
+    print(f"[OK] Classification report disimpan ke: {output_path}")
 
-    # 5) Save artifacts
-    model_name = _model_display_name(model_path)
-    run_dir = os.path.join(output_dir, model_name)
-    _ensure_dir(run_dir)
 
-    metrics_path = os.path.join(run_dir, "metrics.json")
-    with open(metrics_path, "w", encoding="utf-8") as f:
-        payload = asdict(eval_res)
-        payload["created_at"] = datetime.now().isoformat(timespec="seconds")
-        payload["max_words"] = max_words
-        payload["max_len"] = max_len
-        payload["test_size"] = test_size
-        payload["random_state"] = random_state
-        json.dump(payload, f, indent=2)
-    print(f"[OK] Metrics disimpan: {metrics_path}")
-
-    report_txt = classification_report(y_test, y_pred, target_names=["Ham", "Spam"], digits=4, zero_division=0)
-    report_path = os.path.join(run_dir, "classification_report.txt")
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(report_txt)
-    print(f"[OK] Classification report disimpan: {report_path}")
-
-    plot_confusion_matrix(cm, output_path=os.path.join(run_dir, "confusion_matrix.png"), normalize=False)
-    plot_confusion_matrix(cm, output_path=os.path.join(run_dir, "confusion_matrix_normalized.png"), normalize=True)
-
-    # Curves
-    plot_roc_curve(y_test, y_score, output_path=os.path.join(run_dir, "roc_curve.png"))
-    plot_pr_curve(y_test, y_score, output_path=os.path.join(run_dir, "pr_curve.png"))
-
-    # 6) Console summary
-    print("\n" + "=" * 80)
-    print(f"EVALUATION SUMMARY - {model_name}")
-    print("=" * 80)
-    print(f"Model: {model_path}")
-    print(f"Test samples: {eval_res.n_test}")
-    print(f"Threshold: {eval_res.threshold}")
-    print("\nMetrics:")
-    print(f"  Accuracy           : {eval_res.accuracy:.4f}")
-    print(f"  Precision (Spam)   : {eval_res.precision:.4f}")
-    print(f"  Recall (Spam)      : {eval_res.recall:.4f}")
-    print(f"  F1-score (Spam)    : {eval_res.f1_score:.4f}")
-    print(f"  Balanced Accuracy  : {eval_res.balanced_accuracy:.4f}")
-    print(f"  Specificity (Ham)  : {eval_res.specificity:.4f}")
-    print(f"  NPV                : {eval_res.npv:.4f}")
-    print(f"  MCC                : {eval_res.mcc:.4f}")
-    if eval_res.roc_auc is not None:
-        print(f"  ROC-AUC            : {eval_res.roc_auc:.4f}")
-    if eval_res.pr_auc is not None:
-        print(f"  PR-AUC (AP)        : {eval_res.pr_auc:.4f}")
-    if eval_res.log_loss is not None:
-        print(f"  Log Loss           : {eval_res.log_loss:.4f}")
-    print("\nConfusion Matrix (TN FP / FN TP):")
-    print(f"  TN={eval_res.tn}  FP={eval_res.fp}")
-    print(f"  FN={eval_res.fn}  TP={eval_res.tp}")
-    print("\nClassification Report:")
-    print(report_txt)
-
-    return eval_res
+def save_confusion_matrix(cm, model_name, output_path):
+    """
+    Simpan confusion matrix ke file CSV
+    
+    Args:
+        cm (np.ndarray): Confusion matrix dari sklearn
+        model_name (str): Nama model
+        output_path (str): Path untuk menyimpan CSV file
+        
+    Returns:
+        None
+    """
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
+    tn, fp, fn, tp = cm.ravel()
+    
+    # Create CSV format
+    cm_df = pd.DataFrame(
+        [[tn, fp], [fn, tp]],
+        index=['Predicted Ham', 'Predicted Spam'],
+        columns=['Actual Ham', 'Actual Spam']
+    )
+    
+    cm_df.to_csv(output_path)
+    print(f"[OK] Confusion matrix disimpan ke: {output_path}")
+    
+    return cm_df
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Evaluate SMS Spam model on test set")
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="results/models/lstm.h5",
-        help="Path model .h5 untuk dievaluasi (default: results/models/lstm.h5)",
-    )
-    parser.add_argument(
-        "--compare",
-        action="store_true",
-        help="Evaluasi dua model: results/models/simple_rnn.h5 dan results/models/lstm.h5 (yang ada saja)",
-    )
-    parser.add_argument("--threshold", type=float, default=0.5, help="Threshold untuk prediksi spam")
-    parser.add_argument("--max_words", type=int, default=5000, help="Tokenizer num_words (harus sama dgn training)")
-    parser.add_argument("--max_len", type=int, default=100, help="Panjang sequence padding (harus sama dgn training)")
-    parser.add_argument("--test_size", type=float, default=0.2, help="Proporsi test set (harus sama dgn training)")
-    parser.add_argument("--random_state", type=int, default=42, help="Random state split (harus sama dgn training)")
-    parser.add_argument("--batch_size", type=int, default=1024, help="Batch size saat predict")
-    parser.add_argument("--output_dir", type=str, default="results/evaluation", help="Folder output hasil evaluasi")
-    args = parser.parse_args()
-
-    print("\n" + "+" + "=" * 78 + "+")
-    print("|" + " " * 22 + "SMS SPAM CLASSIFICATION - EVALUATION" + " " * 20 + "|")
+    """
+    Main execution block - Load models, evaluate pada test set, save results
+    """
+    print("\n")
+    print("+" + "=" * 78 + "+")
+    print("|" + " " * 18 + "SMS SPAM CLASSIFICATION - MODEL EVALUATION" + " " * 18 + "|")
     print("|" + " " * 30 + "Kelompok 7 - Tugas Akhir AI" + " " * 21 + "|")
-    print("+" + "=" * 78 + "+\n")
-
-    _ensure_dir(args.output_dir)
-
-    model_paths: list[str]
-    if args.compare:
-        model_paths = ["results/models/simple_rnn.h5", "results/models/lstm.h5"]
-        model_paths = [p for p in model_paths if os.path.exists(p)]
-        if not model_paths:
-            raise FileNotFoundError(
-                "Tidak ada model ditemukan di results/models/. "
-                "Jalankan training dulu: python src/train_lstm.py"
+    print("+" + "=" * 78 + "+")
+    
+    # Configuration
+    MAX_WORDS = 5000
+    MAX_LEN = 100
+    RANDOM_STATE = 42
+    THRESHOLD = 0.5
+    TEST_SIZE = 0.2
+    
+    # Model paths
+    SIMPLE_RNN_PATH = 'models/simple_rnn_model.h5'
+    LSTM_PATH = 'models/lstm_model.h5'
+    
+    # Output paths
+    RESULTS_DIR = 'results'
+    METRICS_CSV = os.path.join(RESULTS_DIR, 'evaluation_metrics.csv')
+    
+    # Create results directory if not exists
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    
+    try:
+        # =====================================================================
+        # STEP 1: Load and preprocess data
+        # =====================================================================
+        print("\n" + "=" * 80)
+        print("STEP 1: LOADING AND PREPROCESSING DATA")
+        print("=" * 80)
+        
+        X_train_pad, X_test_pad, y_train, y_test, tokenizer, label_encoder = \
+            load_and_preprocess_data(
+                csv_path="spam.csv",
+                max_words=MAX_WORDS,
+                max_len=MAX_LEN,
+                test_size=TEST_SIZE,
+                random_state=RANDOM_STATE
             )
-    else:
-        model_paths = [args.model]
-
-    for p in model_paths:
-        evaluate_keras_model(
-            model_path=p,
-            max_words=args.max_words,
-            max_len=args.max_len,
-            test_size=args.test_size,
-            random_state=args.random_state,
-            threshold=args.threshold,
-            output_dir=args.output_dir,
-            batch_size=args.batch_size,
-        )
+        
+        print(f"\n[OK] Data loaded successfully!")
+        print(f"  - Test set shape: {X_test_pad.shape}")
+        print(f"  - Test labels shape: {y_test.shape}")
+        
+        # =====================================================================
+        # STEP 2: Evaluate Simple RNN
+        # =====================================================================
+        print("\n" + "=" * 80)
+        print("STEP 2: EVALUATING SIMPLE RNN MODEL")
+        print("=" * 80)
+        
+        try:
+            simple_rnn_model = load_trained_model(SIMPLE_RNN_PATH)
+            simple_rnn_pred, simple_rnn_proba = predict_labels(
+                simple_rnn_model, X_test_pad, threshold=THRESHOLD
+            )
+            simple_rnn_metrics, simple_rnn_cm = evaluate_predictions(
+                y_test, simple_rnn_pred, 'Simple RNN'
+            )
+            
+            # Save results
+            save_classification_report(
+                y_test, simple_rnn_pred, 'Simple RNN',
+                os.path.join(RESULTS_DIR, 'simple_rnn_classification_report.txt')
+            )
+            save_confusion_matrix(
+                simple_rnn_cm, 'Simple RNN',
+                os.path.join(RESULTS_DIR, 'simple_rnn_confusion_matrix.csv')
+            )
+            
+            simple_rnn_available = True
+        except FileNotFoundError as e:
+            print(f"\n[WARNING] {str(e)}")
+            simple_rnn_available = False
+            simple_rnn_metrics = None
+        
+        # =====================================================================
+        # STEP 3: Evaluate LSTM
+        # =====================================================================
+        print("\n" + "=" * 80)
+        print("STEP 3: EVALUATING LSTM MODEL")
+        print("=" * 80)
+        
+        try:
+            lstm_model = load_trained_model(LSTM_PATH)
+            lstm_pred, lstm_proba = predict_labels(
+                lstm_model, X_test_pad, threshold=THRESHOLD
+            )
+            lstm_metrics, lstm_cm = evaluate_predictions(
+                y_test, lstm_pred, 'LSTM'
+            )
+            
+            # Save results
+            save_classification_report(
+                y_test, lstm_pred, 'LSTM',
+                os.path.join(RESULTS_DIR, 'lstm_classification_report.txt')
+            )
+            save_confusion_matrix(
+                lstm_cm, 'LSTM',
+                os.path.join(RESULTS_DIR, 'lstm_confusion_matrix.csv')
+            )
+            
+            lstm_available = True
+        except FileNotFoundError as e:
+            print(f"\n[WARNING] {str(e)}")
+            lstm_available = False
+            lstm_metrics = None
+        
+        # =====================================================================
+        # STEP 4: Comparison Summary
+        # =====================================================================
+        print("\n" + "=" * 80)
+        print("STEP 4: EVALUATION SUMMARY")
+        print("=" * 80)
+        
+        # Prepare comparison table
+        metrics_list = []
+        
+        if simple_rnn_available and simple_rnn_metrics:
+            metrics_list.append(simple_rnn_metrics)
+        
+        if lstm_available and lstm_metrics:
+            metrics_list.append(lstm_metrics)
+        
+        if metrics_list:
+            # Save metrics CSV
+            save_metrics_to_csv(metrics_list, METRICS_CSV)
+            
+            # Display comparison table
+            print("\n" + "=" * 80)
+            print("MODEL COMPARISON")
+            print("=" * 80)
+            
+            df_comparison = pd.DataFrame(metrics_list)
+            print("\n" + df_comparison.to_string(index=False))
+            
+            # Best model
+            best_idx = df_comparison['accuracy'].idxmax()
+            best_model = df_comparison.loc[best_idx, 'model']
+            best_accuracy = df_comparison.loc[best_idx, 'accuracy']
+            
+            print(f"\n🏆 Best Model: {best_model} (Accuracy: {best_accuracy:.4f})")
+        
+        # =====================================================================
+        # STEP 5: Summary
+        # =====================================================================
+        print("\n" + "=" * 80)
+        print("EVALUATION COMPLETED")
+        print("=" * 80)
+        
+        print("\n📊 Output Files:")
+        print(f"  ✓ {METRICS_CSV}")
+        
+        if simple_rnn_available:
+            print(f"  ✓ {os.path.join(RESULTS_DIR, 'simple_rnn_classification_report.txt')}")
+            print(f"  ✓ {os.path.join(RESULTS_DIR, 'simple_rnn_confusion_matrix.csv')}")
+        
+        if lstm_available:
+            print(f"  ✓ {os.path.join(RESULTS_DIR, 'lstm_classification_report.txt')}")
+            print(f"  ✓ {os.path.join(RESULTS_DIR, 'lstm_confusion_matrix.csv')}")
+        
+        print("\n" + "=" * 80 + "\n")
+        
+    except Exception as e:
+        print(f"\n[ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
