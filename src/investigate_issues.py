@@ -49,7 +49,7 @@ try:
         stratify=y_train
     )
     
-    print("\n✓ Data loaded successfully!")
+    print("\nData loaded successfully!")
     print("\n[TRAINING SET]")
     print(f"  - Shape: {X_train_final.shape}")
     print(f"  - Label distribution:")
@@ -77,7 +77,7 @@ try:
         label_name = "Ham" if label == 0 else "Spam"
         print(f"    • Class {label} ({label_name}): {count} ({pct:.2f}%)")
     
-    print("\n✓ All sets have both classes - stratification OK!")
+    print("\nAll sets have both classes - stratification OK!")
     
 except Exception as e:
     print(f"✗ Error loading data: {e}")

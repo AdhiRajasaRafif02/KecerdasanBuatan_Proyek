@@ -19,8 +19,13 @@ import os
 import json
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, SimpleRNN, LSTM, Dense, Dropout, Input
+from tensorflow.keras.layers import Embedding, SimpleRNN, LSTM, Dense, Dropout, Input, Bidirectional
+
+# Set random seeds for reproducibility
+np.random.seed(42)
+tf.random.set_seed(42)
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.metrics import Precision, Recall
@@ -101,8 +106,8 @@ def build_lstm_model(vocab_size, max_len=100, embedding_dim=128,
     model = Sequential([
         Input(shape=(max_len,)),
         Embedding(input_dim=vocab_size, output_dim=embedding_dim, name='embedding'),
-        LSTM(lstm_units, dropout=dropout_rate, 
-             recurrent_dropout=rec_dropout_rate, name='lstm'),
+        Bidirectional(LSTM(lstm_units, dropout=dropout_rate, 
+             recurrent_dropout=rec_dropout_rate), name='bilstm'),
         Dense(dense_units, activation='relu', name='dense_1'),
         Dropout(dropout_rate, name='dropout'),
         Dense(1, activation='sigmoid', name='output')
@@ -382,38 +387,38 @@ if __name__ == '__main__':
         
         print("\n[OK] TRAINING SELESAI SUCCESSFULLY!")
         
-        print("\n📊 Data Summary:")
-        print(f"  ✓ Total samples: {len(X_train_pad) + len(X_test_pad)}")
-        print(f"  ✓ Training: {X_train_final.shape[0]} samples")
-        print(f"  ✓ Validation: {X_val.shape[0]} samples")
-        print(f"  ✓ Test: {X_test_pad.shape[0]} samples")
+        print("\nData Summary:")
+        print(f"  Total samples: {len(X_train_pad) + len(X_test_pad)}")
+        print(f"  Training: {X_train_final.shape[0]} samples")
+        print(f"  Validation: {X_val.shape[0]} samples")
+        print(f"  Test: {X_test_pad.shape[0]} samples")
         
-        print("\n🏗️  Model Architecture:")
-        print(f"  ✓ Vocabulary size: {vocab_size}")
-        print(f"  ✓ Max sequence length: {max_len}")
-        print(f"  ✓ Embedding dimension: 128")
-        print(f"  ✓ Simple RNN units: 64")
-        print(f"  ✓ LSTM units: 64")
-        print(f"  ✓ Dense units: 32")
+        print("\nModel Architecture:")
+        print(f"  Vocabulary size: {vocab_size}")
+        print(f"  Max sequence length: {max_len}")
+        print(f"  Embedding dimension: 128")
+        print(f"  Simple RNN units: 64")
+        print(f"  LSTM units: 64")
+        print(f"  Dense units: 32")
         
-        print("\n💾 Model Files Saved:")
-        print(f"  ✓ models/simple_rnn_model.h5")
-        print(f"  ✓ models/lstm_model.h5")
+        print("\nModel Files Saved:")
+        print(f"  models/simple_rnn_model.h5")
+        print(f"  models/lstm_model.h5")
         
-        print("\n📈 Training History Saved:")
-        print(f"  ✓ results/simple_rnn_history.csv")
-        print(f"  ✓ results/lstm_history.csv")
+        print("\nTraining History Saved:")
+        print(f"  results/simple_rnn_history.csv")
+        print(f"  results/lstm_history.csv")
         
-        print("\n⚙️  Training Configuration:")
-        print(f"  ✓ Epochs: 20 (dengan early stopping)")
-        print(f"  ✓ Batch size: 32")
-        print(f"  ✓ Optimizer: Adam (lr=0.001)")
-        print(f"  ✓ Loss: binary_crossentropy")
-        print(f"  ✓ Metrics: accuracy")
-        print(f"  ✓ Class weights: balanced")
+        print("\nTraining Configuration:")
+        print(f"  Epochs: 20 (dengan early stopping)")
+        print(f"  Batch size: 32")
+        print(f"  Optimizer: Adam (lr=0.001)")
+        print(f"  Loss: binary_crossentropy")
+        print(f"  Metrics: accuracy")
+        print(f"  Class weights: balanced")
         
         print("\n" + "=" * 80)
-        print("🎯 Next Steps:")
+        print("Next Steps:")
         print("  1. Run: python src/evaluate.py")
         print("     (untuk evaluasi model di test set)")
         print("  2. Run: python src/hyperparameter_tuning.py")

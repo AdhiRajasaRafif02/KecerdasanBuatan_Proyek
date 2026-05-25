@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Input
+from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Input, Bidirectional
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.metrics import Precision, Recall
@@ -77,8 +77,8 @@ def build_lstm_model(vocab_size, max_len=100, embedding_dim=128, lstm_units=64,
     model = Sequential([
         Input(shape=(max_len,)),
         Embedding(input_dim=vocab_size, output_dim=embedding_dim, name='embedding'),
-        LSTM(lstm_units, dropout=dropout_rate,
-             recurrent_dropout=rec_dropout_rate, name='lstm'),
+        Bidirectional(LSTM(lstm_units, dropout=dropout_rate,
+             recurrent_dropout=rec_dropout_rate), name='bilstm'),
         Dense(dense_units, activation='relu', name='dense_1'),
         Dropout(dropout_rate, name='dropout'),
         Dense(1, activation='sigmoid', name='output')
@@ -234,27 +234,14 @@ def run_hyperparameter_tuning():
     print("=" * 80)
 
     experiments = [
-        {
-            'run_name': 'Run_1_baseline',
-            'lstm_units': 64,
-            'dropout': 0.5,
-            'batch_size': 32,
-            'epochs': 10
-        },
-        {
-            'run_name': 'Run_2_more_units',
-            'lstm_units': 128,
-            'dropout': 0.5,
-            'batch_size': 32,
-            'epochs': 10
-        },
-        {
-            'run_name': 'Run_3_less_dropout',
-            'lstm_units': 64,
-            'dropout': 0.3,
-            'batch_size': 32,
-            'epochs': 10
-        }
+        {'run_name': 'Run_1_baseline_bilstm', 'lstm_units': 64, 'dropout': 0.5, 'batch_size': 32, 'epochs': 10, 'lr': 0.001},
+        {'run_name': 'Run_2_more_units', 'lstm_units': 128, 'dropout': 0.5, 'batch_size': 32, 'epochs': 10, 'lr': 0.001},
+        {'run_name': 'Run_3_less_dropout', 'lstm_units': 64, 'dropout': 0.3, 'batch_size': 32, 'epochs': 10, 'lr': 0.001},
+        {'run_name': 'Run_4_high_lr', 'lstm_units': 64, 'dropout': 0.5, 'batch_size': 32, 'epochs': 10, 'lr': 0.01},
+        {'run_name': 'Run_5_low_lr', 'lstm_units': 64, 'dropout': 0.5, 'batch_size': 32, 'epochs': 10, 'lr': 0.0001},
+        {'run_name': 'Run_6_small_batch', 'lstm_units': 64, 'dropout': 0.5, 'batch_size': 16, 'epochs': 10, 'lr': 0.001},
+        {'run_name': 'Run_7_large_units_low_drop', 'lstm_units': 128, 'dropout': 0.3, 'batch_size': 32, 'epochs': 10, 'lr': 0.001},
+        {'run_name': 'Run_8_complex', 'lstm_units': 128, 'dropout': 0.4, 'batch_size': 16, 'epochs': 12, 'lr': 0.0005}
     ]
 
     print("\nHyperparameter Experiments:")
@@ -264,6 +251,7 @@ def run_hyperparameter_tuning():
         print(f"    - Dropout: {exp['dropout']}")
         print(f"    - Batch size: {exp['batch_size']}")
         print(f"    - Epochs: {exp['epochs']}")
+        print(f"    - Learning rate: {exp['lr']}")
 
     # =========================================================================
     # STEP 3: RUN EXPERIMENTS
@@ -287,6 +275,7 @@ def run_hyperparameter_tuning():
         dropout = exp['dropout']
         batch_size = exp['batch_size']
         epochs = exp['epochs']
+        learning_rate = exp.get('lr', 0.001)
 
         # Create validation split dari training data
         print(f"\n[INFO] Creating validation split (80:20)...")
@@ -311,7 +300,7 @@ def run_hyperparameter_tuning():
             dense_units=32,
             dropout_rate=dropout,
             rec_dropout_rate=0.2,
-            learning_rate=0.001
+            learning_rate=learning_rate
         )
 
         print(f"  - Model architecture prepared")

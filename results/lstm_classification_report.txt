@@ -3,9 +3,9 @@ Classification Report - LSTM
 
               precision    recall  f1-score   support
 
-         Ham     0.8664    1.0000    0.9284       966
-        Spam     0.0000    0.0000    0.0000       149
+         Ham     0.9906    0.9865    0.9886       966
+        Spam     0.9150    0.9396    0.9272       149
 
-    accuracy                         0.8664      1115
-   macro avg     0.4332    0.5000    0.4642      1115
-weighted avg     0.7506    0.8664    0.8043      1115
+    accuracy                         0.9803      1115
+   macro avg     0.9528    0.9631    0.9579      1115
+weighted avg     0.9805    0.9803    0.9804      1115

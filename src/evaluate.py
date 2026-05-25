@@ -98,10 +98,10 @@ def evaluate_predictions(y_true, y_pred, model_name):
         'f1_score': f1,
     }
     
-    print(f"  ✓ Accuracy:  {accuracy:.4f}")
-    print(f"  ✓ Precision: {precision:.4f}")
-    print(f"  ✓ Recall:    {recall:.4f}")
-    print(f"  ✓ F1-score:  {f1:.4f}")
+    print(f"  Accuracy:  {accuracy:.4f}")
+    print(f"  Precision: {precision:.4f}")
+    print(f"  Recall:    {recall:.4f}")
+    print(f"  F1-score:  {f1:.4f}")
     
     return metrics, cm
 
@@ -335,7 +335,7 @@ if __name__ == '__main__':
             best_model = df_comparison.loc[best_idx, 'model']
             best_accuracy = df_comparison.loc[best_idx, 'accuracy']
             
-            print(f"\n🏆 Best Model: {best_model} (Accuracy: {best_accuracy:.4f})")
+            print(f"\nBest Model: {best_model} (Accuracy: {best_accuracy:.4f})")
         
         # =====================================================================
         # STEP 5: Summary
@@ -344,16 +344,16 @@ if __name__ == '__main__':
         print("EVALUATION COMPLETED")
         print("=" * 80)
         
-        print("\n📊 Output Files:")
-        print(f"  ✓ {METRICS_CSV}")
+        print("\nOutput Files:")
+        print(f"  {METRICS_CSV}")
         
         if simple_rnn_available:
-            print(f"  ✓ {os.path.join(RESULTS_DIR, 'simple_rnn_classification_report.txt')}")
-            print(f"  ✓ {os.path.join(RESULTS_DIR, 'simple_rnn_confusion_matrix.csv')}")
+            print(f"  {os.path.join(RESULTS_DIR, 'simple_rnn_classification_report.txt')}")
+            print(f"  {os.path.join(RESULTS_DIR, 'simple_rnn_confusion_matrix.csv')}")
         
         if lstm_available:
-            print(f"  ✓ {os.path.join(RESULTS_DIR, 'lstm_classification_report.txt')}")
-            print(f"  ✓ {os.path.join(RESULTS_DIR, 'lstm_confusion_matrix.csv')}")
+            print(f"  {os.path.join(RESULTS_DIR, 'lstm_classification_report.txt')}")
+            print(f"  {os.path.join(RESULTS_DIR, 'lstm_confusion_matrix.csv')}")
         
         print("\n" + "=" * 80 + "\n")
         

@@ -153,7 +153,7 @@ def main():
     }
     
     print("\n" + "="*70)
-    print("📊 SMS Spam Classification - Visualization Generator")
+    print("SMS Spam Classification - Visualization Generator")
     print("="*70 + "\n")
     
     # Check if all input files exist
@@ -232,7 +232,7 @@ def main():
         print("\n✅ Semua visualisasi berhasil disimpan di folder 'results/':")
         for name, path in output_files.items():
             if path.exists():
-                print(f"   ✓ {path.name}")
+                print(f"   {path.name}")
         return True
     else:
         print("\n⚠️  Beberapa visualisasi gagal. Periksa pesan error di atas.")

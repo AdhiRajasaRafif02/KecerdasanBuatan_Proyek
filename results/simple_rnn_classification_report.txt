@@ -3,9 +3,9 @@ Classification Report - Simple RNN
 
               precision    recall  f1-score   support
 
-         Ham     0.9758    0.9586    0.9671       966
-        Spam     0.7590    0.8456    0.8000       149
+         Ham     0.9559    0.8747    0.9135       966
+        Spam     0.4762    0.7383    0.5789       149
 
-    accuracy                         0.9435      1115
-   macro avg     0.8674    0.9021    0.8836      1115
-weighted avg     0.9468    0.9435    0.9448      1115
+    accuracy                         0.8565      1115
+   macro avg     0.7160    0.8065    0.7462      1115
+weighted avg     0.8918    0.8565    0.8688      1115

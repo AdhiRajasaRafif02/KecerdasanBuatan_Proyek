@@ -61,7 +61,7 @@ Proyek saat ini telah menyelesaikan seluruh tahapan utama machine learning pipel
 
 # Tahapan yang Sudah Dilakukan
 
-## 1. ✓ Pencarian dan Pemilihan Dataset
+## 1. Pencarian dan Pemilihan Dataset
 - Memilih SMS Spam Collection Dataset sebagai dataset utama
 - Dataset berisi ±5.500 pesan SMS
 - Distribusi label:
@@ -70,7 +70,7 @@ Proyek saat ini telah menyelesaikan seluruh tahapan utama machine learning pipel
 
 ---
 
-## 2. ✓ Exploratory Data Analysis (EDA)
+## 2. Exploratory Data Analysis (EDA)
 
 Tahapan EDA yang dilakukan:
 - Membaca dataset menggunakan Pandas
@@ -80,7 +80,7 @@ Tahapan EDA yang dilakukan:
 
 ---
 
-## 3. ✓ Pra-pemrosesan Data (Data Preprocessing)
+## 3. Pra-pemrosesan Data (Data Preprocessing)
 
 ### Text Cleaning
 - Mengubah teks menjadi lowercase
@@ -107,7 +107,7 @@ Tahapan EDA yang dilakukan:
 
 ---
 
-## 4. ✓ Model Development dan Training
+## 4. Model Development dan Training
 
 ### Baseline Model
 Simple RNN digunakan sebagai baseline model.
@@ -123,10 +123,10 @@ LSTM digunakan sebagai model utama klasifikasi SMS spam.
 
 ### Hasil Training
 
-| Model | Validation Accuracy |
-|---|---|
-| Simple RNN | ~13.45% |
-| LSTM | ~86.55% |
+| Model | Test Accuracy | Test F1-Score |
+|---|---|---|
+| Simple RNN | ~85.65% | ~57.89% |
+| Bidirectional LSTM | ~98.03% | ~92.72% |
 
 ### Output Model
 Model yang berhasil disimpan:
@@ -135,7 +135,7 @@ Model yang berhasil disimpan:
 
 ---
 
-## 5. ✓ Evaluasi Model
+## 5. Evaluasi Model
 
 Evaluasi dilakukan menggunakan test set untuk memperoleh performa aktual model.
 
@@ -172,7 +172,7 @@ Berisi:
 
 ---
 
-## 6. ✓ Hyperparameter Tuning dan Error Analysis
+## 6. Hyperparameter Tuning dan Error Analysis
 
 Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LSTM untuk meningkatkan performa klasifikasi SMS spam.
 
@@ -197,15 +197,14 @@ Tahap optimisasi model dilakukan menggunakan hyperparameter tuning pada model LS
 | Epoch | 15 |
 | Optimizer | Adam |
 
-### Hasil Setelah Hyperparameter Tuning
+### Hasil Setelah Hyperparameter Tuning & Preprocessing Lanjutan
 
 | Metric | Score |
 |---|---|
-| Accuracy | ~91% |
-| Precision | ~90% |
-| Recall | ~89% |
-| F1-Score | ~89% |
-| ROC-AUC | ~0.94 |
+| Accuracy | ~98.03% |
+| Precision | ~91.50% |
+| Recall | ~93.96% |
+| F1-Score | ~92.72% |
 
 ### Error Analysis
 Analisis dilakukan terhadap:
@@ -347,6 +346,39 @@ python src/error_analysis.py
 
 ---
 
+# Analisis Etika, Bias, dan Keterbatasan Model
+
+Dokumen ini disusun untuk mendokumentasikan analisis mendalam mengenai etika, potensi bias, dan edge cases dari model klasifikasi SMS Spam yang telah dibangun menggunakan Bidirectional LSTM.
+
+## 1. Potensi Bias pada Model
+
+Walaupun dataset (SMS Spam Collection) memiliki representasi yang cukup baik, terdapat beberapa potensi bias bawaan:
+- **Bias Kelas Mayoritas (Imbalance):** Dataset didominasi oleh pesan `ham` (~87%). Meskipun kita telah mengatasinya menggunakan parameter `class_weight='balanced'` selama *training*, model secara inheren memiliki riwayat melihat jauh lebih banyak teks normal.
+- **Bias Bahasa/Konteks:** Dataset ini berbasis bahasa Inggris dengan konteks slang dan tren promosi luar negeri (seperti penawaran dalam Pounds/Dollars). Model ini memiliki keterbatasan linguistik dan akan kehilangan efektivitasnya jika diterapkan pada pola spam lokal (seperti SMS penipuan *"Mama minta pulsa"* atau *"Pinjol cepat cair"* berbahasa Indonesia).
+
+## 2. Analisis Kasus Kegagalan (Edge Cases)
+
+Berikut adalah beberapa *edge cases* yang berpotensi membingungkan model (salah klasifikasi):
+
+### A. False Positives (Ham ditandai sebagai Spam)
+*False Positive* merupakan kegagalan yang paling tidak diinginkan karena pengguna bisa kehilangan pesan penting.
+- **Notifikasi Transaksional Resmi:** Pesan OTP, notifikasi tagihan kartu kredit dari bank, atau promosi sah berlangganan dari provider telekomunikasi yang sering kali padat angka (nominal uang) dan seruan tindakan (`!`). Karena simbol dan angka dipertahankan di preprocessing kita, model mungkin bingung membedakan *"Your OTP is 4928. Do not share!"* dengan pesan spam jika panjang teksnya hampir sama.
+- **Pesan Mendesak dari Kerabat:** Teks sah bergaya *urgent* seperti *"CALL ME NOW! URGENT!"* atau *"Where are u?! Reply immediately!"* bisa ditandai sebagai spam karena penggunaan kapital berlebih dan kata seruan yang umum dipakai *spammers*.
+
+### B. False Negatives (Spam lolos sebagai Ham)
+*False Negative* terjadi ketika SMS spam gagal terdeteksi oleh sistem.
+- **Manipulasi Ejaan (Adversarial Text):** Spammers dapat memodifikasi huruf untuk menghindari deteksi (misal: ejaan "FR33" alih-alih "FREE", atau menyisipkan banyak titik di antara huruf).
+- **Spam Pendekatan Personal (Social Engineering):** Penipuan modern seringkali meniru gaya percakapan santai (contoh: *"Hey, are you free tomorrow? Can you help me out?"*). Pesan semacam ini tidak memiliki *vocabulary* khas spam (seperti *winner, cash, claim*) sehingga model sangat mungkin mengklasifikasikannya sebagai pesan `ham`.
+
+## 3. Langkah Mitigasi yang Telah Diimplementasikan
+
+Dalam proyek ini, telah dilakukan beberapa upaya iteratif untuk meminimalisir kesalahan klasifikasi tersebut:
+1. **Pemisahan Entitas Angka:** Pada modul `eda_preprocessing.py`, angka tidak dihapus secara membabi buta, melainkan direpresentasikan menjadi token standar `<NUM>`. Hal ini mencegah *vocabulary size* meledak namun tetap memberi *clue* ke model tentang kehadiran angka-angka penting (misal: nomor telepon untuk dihubungi).
+2. **Mempertahankan Simbol Indikator:** Simbol `!`, `?`, dan `$` diselamatkan dari proses Regex karena kemunculan berlebihan dari simbol-simbol ini adalah ciri kuat manipulasi emosi (urgensi atau godaan finansial) dari para penipu.
+3. **Arsitektur Bidirectional:** Perpindahan dari Simple RNN/LSTM biasa menuju Bidirectional LSTM membekali model kemampuan membaca frasa dari dua sisi. Ini membantu membedakan makna kontekstual kalimat utuh ketimbang hanya mencocokkan *keyword*.
+
+---
+
 # Struktur Proyek
 
 ```text
@@ -398,9 +430,8 @@ KecerdasanBuatan_Proyek/
 
 # Tahapan Pengerjaan Proyek
 
-1. ✓ Tahap 1: Pencarian dataset dan EDA
-2. ✓ Tahap 2: Preprocessing dan persiapan data
-3. ✓ Tahap 3: Training model RNN dan LSTM
-4. ✓ Tahap 4: Evaluasi dan analisis hasil
-5. ✓ Tahap 5: Fine-tuning dan optimisasi model
-6. Tahap 6: Finalisasi laporan dan presentasi
+1. Tahap 1: Pencarian dataset dan EDA
+2. Tahap 2: Preprocessing dan persiapan data
+3. Tahap 3: Training model RNN dan LSTM
+4. Tahap 4: Evaluasi dan analisis hasil
+5. Tahap 5: Fine-tuning dan optimisasi model

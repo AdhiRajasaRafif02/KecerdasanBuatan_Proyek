@@ -2,17 +2,17 @@
 ERROR ANALYSIS REPORT - SMS SPAM CLASSIFICATION (LSTM MODEL)
 ==========================================================================================
 
-Generated: 2026-05-24 23:18:57
+Generated: 2026-05-25 16:25:42
 
 ==========================================================================================
 SUMMARY STATISTICS
 ==========================================================================================
 
 Total Test Samples:              1115
-Correct Predictions:             563 (50.49%)
-Incorrect Predictions:           552
-  - False Positives (Ham->Spam):  481
-  - False Negatives (Spam->Ham):  71
+Correct Predictions:             1093 (98.03%)
+Incorrect Predictions:           22
+  - False Positives (Ham->Spam):  13
+  - False Negatives (Spam->Ham):  9
 
 Label Mapping:
   0 = Ham (Legitimate message)
@@ -23,56 +23,56 @@ FALSE POSITIVE EXAMPLES (Ham predicted as Spam)
 ==========================================================================================
 
 Example 1:
-  Message: i am in tirupur call you da
+  Message: great p diddy neighbor comes toothpaste every morning
   True Label: 0 (Ham)
   Predicted Label: 1 (Spam)
-  Confidence: 0.9507
+  Confidence: 0.9912
 
 Example 2:
-  Message: no that just means you have a fat head
+  Message: num dont number num gonna massive pain ass id rather not get involved thats possible
   True Label: 0 (Ham)
   Predicted Label: 1 (Spam)
-  Confidence: 0.7320
+  Confidence: 0.7792
 
 Example 3:
-  Message: dont talk to him ever ok its my word
+  Message: rose redred bloodblood heartheart u u send tis ur friends including u like u get back num u r poor relation ! num u need num support num u r frnd num many num num luvs u num num praying god marry u try
   True Label: 0 (Ham)
   Predicted Label: 1 (Spam)
-  Confidence: 0.8662
+  Confidence: 0.9999
 
 ==========================================================================================
 FALSE NEGATIVE EXAMPLES (Spam predicted as Ham)
 ==========================================================================================
 
 Example 1:
-  Message: you are now unsubscribed all services get tons of sexy babes or hunks straight to your phone go to no subscriptions
+  Message: ringtoneking num
   True Label: 1 (Spam)
   Predicted Label: 0 (Ham)
-  Confidence: 0.3664
+  Confidence: 0.0216
 
 Example 2:
-  Message: do you want anytime any network mins text and a new video phone for only five pounds per week call now or reply for delivery tomorrow
+  Message: sorry missed call lets talk time im num
   True Label: 1 (Spam)
   Predicted Label: 0 (Ham)
-  Confidence: 0.1220
+  Confidence: 0.0059
 
 Example 3:
-  Message: freemsg hey there darling its been weeks now and no word back id like some fun you up for it still tb ok xxx std chgs to send to rcv
+  Message: latest news ! police station toilet stolen cops nothing go !
   True Label: 1 (Spam)
   Predicted Label: 0 (Ham)
-  Confidence: 0.2588
+  Confidence: 0.0126
 
 ==========================================================================================
 CORRECT PREDICTION EXAMPLES (untuk comparison)
 ==========================================================================================
 
 Correct Ham Predictions:
-  1. oh right ok ill make sure that i do loads of work during the day got a really nasty cough today and is dry n shot so that should really help it
-  2. come aftr ltdecimalgt now i m cleaning the house
+  1. oh right ok ill make sure loads work day ! got really nasty cough today dry n shot really help !
+  2. tirupur call da
 
 Correct Spam Predictions:
-  1. you have won cash or a prize to claim call
-  2. wanna get laid nite want real dogging locations sent direct to ur mobile join the uks largest dogging network txt park to now nyt eca lp msg
+  1. ? num num cash ? num num prize ! claim call num
+  2. unsubscribed services get tons sexy babes hunks straight phone ! go no subscriptions
 
 ==========================================================================================
 ANALYSIS DAN RECOMMENDATIONS

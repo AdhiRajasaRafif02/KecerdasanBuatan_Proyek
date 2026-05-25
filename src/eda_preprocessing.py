@@ -20,17 +20,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+import nltk
+from nltk.corpus import stopwords
 
 
 def clean_text(text):
     """
-    Membersihkan text SMS dengan menghilangkan URL, angka, simbol, dan spasi berlebih.
+    Membersihkan text SMS dengan menghilangkan URL, mempertahankan simbol penting ($ ! ?),
+    mengubah angka menjadi <NUM>, dan menghapus stopwords.
     
     Args:
         text (str): Raw SMS text
         
     Returns:
-        str: Cleaned text (lowercase, tanpa URL, angka, simbol, dan spasi berlebih)
+        str: Cleaned text
     """
     # Ubah ke lowercase
     text = text.lower()
@@ -41,11 +44,26 @@ def clean_text(text):
     # Hapus email
     text = re.sub(r'\S+@\S+', '', text)
     
-    # Hapus angka
-    text = re.sub(r'\d+', '', text)
+    # Ganti angka dengan token NUM
+    text = re.sub(r'\d+', ' num ', text)
     
-    # Hapus karakter khusus dan tanda baca (hanya simpan huruf dan spasi)
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    # Hapus karakter khusus KECUALI huruf, spasi, dan $, !, ?
+    text = re.sub(r'[^a-z\s$!?]', '', text)
+    
+    # Tambahkan spasi di sekitar simbol khusus agar tidak menyatu dengan huruf
+    text = re.sub(r'([$!?])', r' \1 ', text)
+    
+    # Stopword removal
+    try:
+        stop_words = set(stopwords.words('english'))
+        # Jangan hapus 'not' atau 'no'
+        stop_words.discard('not')
+        stop_words.discard('no')
+        words = text.split()
+        words = [w for w in words if w not in stop_words]
+        text = ' '.join(words)
+    except:
+        pass
     
     # Hapus spasi berlebih
     text = re.sub(r'\s+', ' ', text).strip()
